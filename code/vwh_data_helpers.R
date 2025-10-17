@@ -115,31 +115,67 @@ filter_to_always_present_workers_and_firms <- function(df, collect = FALSE) {
   df <- .to_arrow_dataset(df)
   stopifnot("year" %in% names(df))
 
+  # Number of distinct years that define "always present"
   total_years <- df |>
     distinct(year) |>
     tally(name = "total_years") |>
     collect() |>
     pull(total_years)
 
-  firm_counts <- df |>
-    distinct(firm, year) |>
-    count(firm, name = "firm_num_years")
+  prev_n_workers <- Inf
+  prev_n_firms   <- Inf
+  iter <- 0L
+  max_iter <- 100L
 
-  worker_counts <- df |>
-    distinct(worker, year) |>
-    count(worker, name = "worker_num_years")
+  repeat {
+    iter <- iter + 1L
+    print(str_glue("Iteration {iter} with {prev_n_workers} workers and {prev_n_firms} firms"))
+    # Firms present in all years given current subset
+    always_present_firms <- df |>
+      distinct(firm, province, year) |>
+      count(firm, province, name = "firm_num_years") |>
+      filter(firm_num_years == total_years) |>
+      select(firm, province)
+
+    # Restrict to those firms
+    df_new <- df |>
+      inner_join(always_present_firms, by = c("firm", "province"))
+
+    # Workers present in all years given current subset
+    always_present_workers <- df_new |>
+      distinct(worker, year) |>
+      count(worker, name = "worker_num_years") |>
+      filter(worker_num_years == total_years) |>
+      select(worker)
+
+    # Restrict to those workers as well
+    df_new <- df_new |>
+      inner_join(always_present_workers, by = "worker") |>
+      collect()
+
+    # Convergence check: sizes of kept sets stop changing
+    n_firms <- always_present_firms |>
+      summarise(n = dplyr::n()) |>
+      collect() |>
+      dplyr::pull(n)
+    n_workers <- always_present_workers |>
+      summarise(n = dplyr::n()) |>
+      collect() |>
+      dplyr::pull(n)
+
+    df <- .to_arrow_dataset(df_new)
+    if ((n_firms == prev_n_firms && n_workers == prev_n_workers) || iter >= max_iter) break
+    prev_n_firms   <- n_firms
+    prev_n_workers <- n_workers
+  }
 
   out <- df |>
-    left_join(firm_counts, by = "firm") |>
-    left_join(worker_counts, by = "worker") |>
-    filter(
-      firm_num_years == total_years,
-      worker_num_years == total_years
-    ) |>
-    select(-firm_num_years, -worker_num_years) |>
-    filter(!is.na(avg_weekly_earnings))
+    filter(!is.na(earnings))
 
   if (collect) out <- collect(out)
+
+  gc()
+
   out
 }
 
@@ -155,12 +191,11 @@ constr_avg_weekly_wages_by_group <- function(df, group_vars, collect = FALSE) {
     # Use tidy-eval to build grouping compatible with Arrow translation
     group_by(!!!rlang::syms(c("worker", group_vars))) |>
     summarise(
-      earnings_sum = sum(earnings, na.rm = TRUE),
-      weeks_sum    = sum(paid_weeks, na.rm = TRUE),
+      earnings = sum(earnings, na.rm = TRUE),
+      paid_weeks    = sum(paid_weeks, na.rm = TRUE),
       .groups = "drop"
     ) |>
-    mutate(avg_weekly_earnings = earnings_sum / weeks_sum) |>
-    select(-earnings_sum, -weeks_sum) |>
+    mutate(avg_weekly_earnings = earnings / paid_weeks) |>
     filter(!is.na(avg_weekly_earnings))
 
   if (collect) {
