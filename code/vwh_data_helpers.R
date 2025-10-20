@@ -23,8 +23,9 @@ utils::globalVariables(c(
 }
 
 # Paths and constants
-RAW_DATA_PATH <- file.path(Sys.getenv("DATA_PATH"), "raw_data")
-CLEAN_DATA_PATH <- file.path(Sys.getenv("DATA_PATH"), "clean_data")
+DATA_PATH <- Sys.getenv("DATA_PATH")
+RAW_DATA_PATH <- file.path(DATA_PATH, "raw_data")
+CLEAN_DATA_PATH <- file.path(DATA_PATH, "clean_data")
 VENETO_PROVINCES <- c("BL", "PD", "RO", "TV", "VE", "VR", "VI")
 
 # Read raw earnings as Arrow-backed query or tibble
