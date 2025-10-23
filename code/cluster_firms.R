@@ -108,9 +108,9 @@ cohort_size_dist_and_num_cohorts_by_k_plot <- (ggplot(cohorts_by_k |> mutate(k =
     + scale_color_viridis_d(end = 0.9, labels = function(x) paste0(x, " (", cohort_counts_named[as.character(x)], ")"))
     + scale_x_log10(labels = scales::trans_format("log10", scales::math_format(10^.x)), limits = c(MIN_COHORT_SIZE, NA))
     + labs(
-        x = "Cohort Size",
+        x = "# Workers in Cohort",
         y = "# Cohorts",
-        color = "# Clusters / Province\n(Total # Cohorts)",
+        color = "# Clusters per Province\n(Total # Cohorts)",
     )
     + guides(color = guide_legend(ncol = 2))
 )
@@ -215,7 +215,7 @@ for (rank in 2:MAX_RANK) {
         + scale_linetype_manual(values = c("r=1 Largest\nConnected\nComponent" = "dashed", "Initial Largest\nSuper Cohort" = "dotted", "Final Largest\nSuper Cohort" = "solid"))
         + labs(
             x = "Number of Firm Clusters per Province", 
-            y = "% of Units in Largest Super Cohort", 
+            y = "% of Workers in Largest Super Cohort", 
             color = "O³ Algorithm\nIteration:",
             linetype = NULL)
         + guides(
