@@ -1,14 +1,6 @@
 library(tidyverse)
 library(arrow)
 
-# Silence R CMD check NOTES for non-standard evaluation column names used with dplyr
-utils::globalVariables(c(
-  "cod_pgr", "matr_az", "anno", "sett_r", "gior_r", "retrib03", "prov_l",
-  "cap", "comune", "prov", "csc", "province", "year", "paid_weeks",
-  "paid_days", "earnings", "worker", "firm", "firm_num_years",
-  "worker_num_years", "avg_weekly_earnings", "earnings_sum", "weeks_sum"
-))
-
 # Internal helper: coerce inputs to an Arrow Dataset for consistent lazy execution
 .to_arrow_dataset <- function(x) {
   # Leave Arrow objects as-is
