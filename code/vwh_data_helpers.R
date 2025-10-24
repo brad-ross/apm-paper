@@ -1,6 +1,11 @@
 library(tidyverse)
 library(arrow)
 
+# Paths and constants
+source("code/get_io_paths.R")
+
+VENETO_PROVINCES <- c("BL", "PD", "RO", "TV", "VE", "VR", "VI")
+
 # Internal helper: coerce inputs to an Arrow Dataset for consistent lazy execution
 .to_arrow_dataset <- function(x) {
   # Leave Arrow objects as-is
@@ -13,12 +18,6 @@ library(arrow)
   }
   x
 }
-
-# Paths and constants
-DATA_PATH <- Sys.getenv("DATA_PATH")
-RAW_DATA_PATH <- file.path(DATA_PATH, "raw_data")
-CLEAN_DATA_PATH <- file.path(DATA_PATH, "clean_data")
-VENETO_PROVINCES <- c("BL", "PD", "RO", "TV", "VE", "VR", "VI")
 
 # Read raw earnings as Arrow-backed query or tibble
 read_raw_earnings_data <- function(collect = FALSE) {
