@@ -15,6 +15,11 @@ if (!dir.exists(PROCESSED_DATA_PATH)) {
   dir.create(PROCESSED_DATA_PATH, recursive = TRUE)
 }
 
+RESULTS_PATH = file.path(Sys.getenv("OUTPUT_PATH"), "simulation_results")
+if (!dir.exists(RESULTS_PATH)) {
+  dir.create(RESULTS_PATH, recursive = TRUE)
+}
+
 FIGURES_PATH = file.path(Sys.getenv("OUTPUT_PATH"), "figures")
 if (!dir.exists(FIGURES_PATH)) {
   dir.create(FIGURES_PATH, recursive = TRUE)
