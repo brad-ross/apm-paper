@@ -11,22 +11,24 @@ if (is.na(num_threads)) {
 library(tidyverse)
 library(arrow)
 
-FIRST_YEAR <- 1998
-LAST_YEAR <- 2001
-MAX_RANK <- 2
+FIRST_YEAR <- as.integer(Sys.getenv("FIRST_YEAR"))
+LAST_YEAR <- as.integer(Sys.getenv("LAST_YEAR"))
+MAX_RANK <- as.integer(Sys.getenv("MAX_RANK"))
 YEAR_CLUSTER_SIZE <- as.integer(ceiling((LAST_YEAR - FIRST_YEAR) / MAX_RANK))
-MIN_COHORT_SIZE <- 50
+MIN_COHORT_SIZE <- as.integer(Sys.getenv("MIN_COHORT_SIZE"))
 
 clustered_panels <- read_parquet(file.path(PROCESSED_DATA_PATH, str_glue("panels_with_clustered_outcomes_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}.parquet"))) |>
     .to_arrow_dataset() |>
     mutate(log_avg_weekly_earnings = log10(avg_weekly_earnings)) |>
     collect()
 
-chosen_k <- 5
+CHOSEN_K <- as.integer(Sys.getenv("CHOSEN_K"))
+
+print(str_glue("Running leave-cohort-outcome-out evals for FIRST_YEAR={FIRST_YEAR}, LAST_YEAR={LAST_YEAR}, MAX_RANK={MAX_RANK}, YEAR_CLUSTER_SIZE={YEAR_CLUSTER_SIZE}, MIN_COHORT_SIZE={MIN_COHORT_SIZE}, CHOSEN_K={CHOSEN_K}"))
 
 full_panel_df <- clustered_panels |>
     .to_arrow_dataset() |>
-    filter(k == chosen_k) |>
+    filter(k == CHOSEN_K) |>
     collect()
 
 panel <- UnbalancedPanel$new(full_panel_df,
@@ -130,14 +132,14 @@ for (cohort_pos in seq_along(cohort_order)) {
             next
         }
 
-        masked_metrics <- masked_metrics |>
-            bind_rows(metrics |>
-                mutate(
-                    total_time = timing["elapsed"],
-                    cohort_size = cohort_size)
-            )
+        metrics <- metrics |> mutate(
+            total_time = timing["elapsed"],
+            cohort_size = cohort_size
+        )
+        masked_metrics <- masked_metrics |> bind_rows(metrics)
+
+        # Checkpoint after every (cohort, outcome) pair
+        write_parquet(masked_metrics,
+            file.path(RESULTS_PATH, str_glue("masked_metrics_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.parquet")))
     }
 }
-
-write_parquet(masked_metrics, 
-    file.path(RESULTS_PATH, str_glue("masked_metrics_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={chosen_k}.parquet")))

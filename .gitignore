@@ -4,3 +4,4 @@ output/**
 **/.DS_Store
 
 code/init_server.sh
+code/vwh_est_sims.slurm

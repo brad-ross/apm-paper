@@ -8,13 +8,13 @@ library(tidyverse)
 earnings <- read_raw_earnings_data()
 firms <- read_raw_firm_data()
 
-FIRST_YEAR <- 1998
-LAST_YEAR <- 2001
-MIN_K <- 1
-MAX_K <- 25
-MAX_RANK <- 2
+FIRST_YEAR <- as.integer(Sys.getenv("FIRST_YEAR"))
+LAST_YEAR <- as.integer(Sys.getenv("LAST_YEAR"))
+MIN_K <- as.integer(Sys.getenv("MIN_K"))
+MAX_K <- as.integer(Sys.getenv("MAX_K"))
+MAX_RANK <- as.integer(Sys.getenv("MAX_RANK"))
 YEAR_CLUSTER_SIZE <- as.integer(ceiling((LAST_YEAR - FIRST_YEAR) / MAX_RANK))
-MIN_COHORT_SIZE <- 50
+MIN_COHORT_SIZE <- as.integer(Sys.getenv("MIN_COHORT_SIZE"))
 
 avg_weekly_earn_by_firm_year <- filter_and_join_match_data(earnings, firms, FIRST_YEAR, LAST_YEAR, VENETO_PROVINCES) |>
     group_years("year", YEAR_CLUSTER_SIZE) |>
@@ -187,8 +187,8 @@ for (rank in 2:MAX_RANK) {
         + geom_line(data = largest_connected_component_sizes_across_clusterings, 
             aes(x = k, y = largest_super_cohort_share, linetype="r=1 Largest\nConnected\nComponent"))
         + geom_line(data = largest_super_cohort_sizes_across_clusterings |> filter(o3_iter == 0), 
-            aes(x = k, y = largest_super_cohort_share, linetype="Initial Largest\nSuper Cohort"))
-        + scale_linetype_manual(values = c("r=1 Largest\nConnected\nComponent" = "dashed", "Initial Largest\nSuper Cohort" = "dotted", "Final Largest\nSuper Cohort" = "solid"))
+            aes(x = k, y = largest_super_cohort_share, linetype="Initial Largest\nCohort"))
+        + scale_linetype_manual(values = c("r=1 Largest\nConnected\nComponent" = "dashed", "Initial Largest\nCohort" = "dotted", "Final Largest\nSuper Cohort" = "solid"))
         + labs(
             x = "Number of Firm Clusters per Province", 
             y = "% of Workers in Largest Super Cohort", 
