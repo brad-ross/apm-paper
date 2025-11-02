@@ -11,7 +11,7 @@ firms <- read_raw_firm_data()
 FIRST_YEAR <- 1998
 LAST_YEAR <- 2001
 MIN_K <- 1
-MAX_K <- 20
+MAX_K <- 25
 MAX_RANK <- 2
 YEAR_CLUSTER_SIZE <- as.integer(ceiling((LAST_YEAR - FIRST_YEAR) / MAX_RANK))
 MIN_COHORT_SIZE <- 50
@@ -19,6 +19,7 @@ MIN_COHORT_SIZE <- 50
 avg_weekly_earn_by_firm_year <- filter_and_join_match_data(earnings, firms, FIRST_YEAR, LAST_YEAR, VENETO_PROVINCES) |>
     group_years("year", YEAR_CLUSTER_SIZE) |>
     constr_avg_weekly_wages_by_group(c("year", "province", "firm")) |>
+    filter(avg_weekly_earnings > 0) |>
     filter_to_always_present_workers_and_firms(collect = TRUE)
 
 firm_clusters = NULL
@@ -54,6 +55,20 @@ panels_with_clustered_outcomes <- avg_weekly_earn_by_firm_year |>
     inner_join(firm_clusters, by = c("province", "firm")) |>
     constr_avg_weekly_wages_by_group(c("year", "province", "k", "cluster")) |>
     mutate(outcome = paste(year, province, cluster, sep = ":")) |>
+    collect()
+
+workers_in_panels_with_T_c_gte_max_rank <- panels_with_clustered_outcomes |>
+    .to_arrow_dataset() |>
+    select(worker, k, outcome) |>
+    distinct() |>
+    group_by(worker, k) |>
+    summarize(T_c = n()) |>
+    filter(T_c >= MAX_RANK) |>
+    select(worker, k)
+
+panels_with_clustered_outcomes <- panels_with_clustered_outcomes |>
+    .to_arrow_dataset() |>
+    inner_join(workers_in_panels_with_T_c_gte_max_rank, by = c("worker", "k")) |>
     collect()
 
 write_parquet(panels_with_clustered_outcomes, file.path(PROCESSED_DATA_PATH, 
@@ -102,7 +117,7 @@ cohort_size_dist_and_num_cohorts_by_k_plot <- (ggplot(cohorts_by_k |> mutate(k =
         y = "# Cohorts",
         color = "# Clusters per Province\n(Total # Cohorts)",
     )
-    + guides(color = guide_legend(ncol = 2))
+    + guides(color = guide_legend(ncol = 3))
 )
 
 ggsave(file.path(FIGURES_PATH, str_glue("cohort_size_dist_and_num_cohorts_by_k_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}.pdf")), cohort_size_dist_and_num_cohorts_by_k_plot, width = 8, height = 3.25)
@@ -154,35 +169,6 @@ for (rank in 2:MAX_RANK) {
 
     largest_super_cohort_sizes_across_clusterings <- comp_largest_super_cohort_sizes_across_clusterings(panels_with_clustered_outcomes, rank)
 
-    # # Create full grid of all unique k and o3_iter
-    # k_vals <- sort(unique(largest_super_cohort_sizes_across_clusterings$k))
-    # o3_iters <- sort(unique(largest_super_cohort_sizes_across_clusterings$o3_iter))
-    # all_combos <- expand.grid(k = k_vals, o3_iter = o3_iters, KEEP.OUT.ATTRS = FALSE, stringsAsFactors = FALSE)
-
-    # # Join to ensure all combos exist
-    # largest_super_cohort_sizes_across_clusterings <- all_combos |>
-    #     left_join(largest_super_cohort_sizes_across_clusterings, by = c("k", "o3_iter")) |>
-    #     group_by(k) |>
-    #     # For missing combos, fill with entry for largest o3_iter with that k
-    #     mutate(
-    #         largest_super_cohort_share = if_else(
-    #             is.na(largest_super_cohort_share),
-    #             largest_super_cohort_share[which.max(o3_iter[!is.na(largest_super_cohort_share)])],
-    #             largest_super_cohort_share
-    #         ),
-    #         num_units_largest_super_cohort = if_else(
-    #             is.na(num_units_largest_super_cohort),
-    #             num_units_largest_super_cohort[which.max(o3_iter[!is.na(num_units_largest_super_cohort)])],
-    #             num_units_largest_super_cohort
-    #         ),
-    #         num_units = ifelse(
-    #             is.na(num_units),
-    #             num_units[which.max(o3_iter[!is.na(num_units)])],
-    #             num_units
-    #         )
-    #     ) |>
-    #     ungroup()
-
     largest_super_cohort_sizes_across_clusterings_for_plot <- largest_super_cohort_sizes_across_clusterings |> 
         mutate(o3_iter = as.character(o3_iter))
 
@@ -190,7 +176,7 @@ for (rank in 2:MAX_RANK) {
         + theme_bw()
         + geom_line(data = largest_super_cohort_sizes_across_clusterings |>
             group_by(k) |>
-            summarize(largest_super_cohort_share = max(largest_super_cohort_share)), 
+            summarize(largest_super_cohort_share = largest_super_cohort_share[which.max(o3_iter)]), 
             aes(x = k, y = largest_super_cohort_share, linetype="Final Largest\nSuper Cohort"))
         + geom_point(data = largest_super_cohort_sizes_across_clusterings |> 
             filter(o3_iter > 0) |>
