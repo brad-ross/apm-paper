@@ -2,70 +2,30 @@ devtools::load_all("../apm-package/r")
 
 source("code/vwh_data_helpers.R")
 source("code/get_io_paths.R")
+source("code/env_config.R")
+source("code/estimation_helpers.R")
 
 library(tidyverse)
 library(arrow)
-library(kableExtra)
-
-num_threads <- as.integer(Sys.getenv("APM_MAX_THREADS"))
-if (is.na(num_threads)) {
-    num_threads <- NULL
-}
-
-FIRST_YEAR <- as.integer(Sys.getenv("FIRST_YEAR"))
-LAST_YEAR <- as.integer(Sys.getenv("LAST_YEAR"))
-MAX_RANK <- as.integer(Sys.getenv("MAX_RANK"))
-YEAR_CLUSTER_SIZE <- as.integer(ceiling((LAST_YEAR - FIRST_YEAR) / MAX_RANK))
-MIN_COHORT_SIZE <- as.integer(Sys.getenv("MIN_COHORT_SIZE"))
-CHOSEN_K <- as.integer(Sys.getenv("CHOSEN_K"))
-
-clustered_panels <- read_parquet(file.path(PROCESSED_DATA_PATH, str_glue("panels_with_clustered_outcomes_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_max_rank=2.parquet"))) |>
-    .to_arrow_dataset() |>
-    mutate(log_avg_weekly_earnings = log10(avg_weekly_earnings)) |>
-    collect()
 
 print(str_glue("Running match outcome decomposition for FIRST_YEAR={FIRST_YEAR}, LAST_YEAR={LAST_YEAR}, MAX_RANK={MAX_RANK}, YEAR_CLUSTER_SIZE={YEAR_CLUSTER_SIZE}, MIN_COHORT_SIZE={MIN_COHORT_SIZE}, CHOSEN_K={CHOSEN_K}"))
 
-full_panel_df <- clustered_panels |>
-    .to_arrow_dataset() |>
-    filter(k == CHOSEN_K) |>
-    collect()
+# Load data using shared helpers
+clustered_panels <- load_clustered_panels()
+full_panel_df <- filter_panel_by_k(clustered_panels)
+panel <- create_estimation_panel(full_panel_df)
 
-panel <- UnbalancedPanel$new(full_panel_df,
-    "worker", "outcome", "log_avg_weekly_earnings",
-    model_rank = MAX_RANK, min_cohort_size = MIN_COHORT_SIZE,
-    subset_to_largest_super_cohort = TRUE)
+# Load firm clusters and compute outcome weights
+firm_clusters <- load_firm_clusters()
+num_firms_by_outcome <- compute_num_firms_by_outcome(firm_clusters, full_panel_df, panel)
 
-firm_clusters <- read_parquet(file.path(PROCESSED_DATA_PATH, str_glue("firm_clusters_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}.parquet")))
-num_firms_by_outcome <- firm_clusters |>
-    filter(k == CHOSEN_K) |>
-    group_by(province, cluster) |>
-    summarize(
-        firms_for_outcome = n()
-    ) |>
-    inner_join(full_panel_df |> select(province, cluster, outcome) |> distinct(), by = c("province", "cluster")) |>
-    ungroup() |>
-    mutate(outcome_idx = panel$get_outcome_to_index()[outcome]) |>
-    select(outcome_idx, firms_for_outcome) |>
-    arrange(outcome_idx) |>
-    pull(firms_for_outcome)
+# Get estimation specifications
+est_specs <- get_default_est_specs(include_extended = FALSE)
 
-est_specs <- list(
-    "twfe" = list(
-        factor_model_estimator = "twfe",
-        include_outcome_fes = TRUE,
-        r = 1
-    ),
-    "pc_1_no_fes_equal_weights" = list(
-        factor_model_estimator = "principal_components",
-        include_outcome_fes = FALSE,
-        r = 1,
-        cohort_weighting = "equal"
-    )
-)
+# Get bootstrap draws
+wb <- get_default_bootstrap(panel)
 
-wb <- get_weighted_bootstrap_draws(panel$get_num_units(), 1000, type = "bayesian", seed = 9001L)
-
+# Compute outcome indices by province for the target year
 outcome_indices_by_province <- {
     outcome_ids <- panel$get_outcome_ids()
     components <- strsplit(outcome_ids, ":", fixed = TRUE)
@@ -128,70 +88,4 @@ target_param_table_data <- bootstrap_inference$as_data_frame() |>
 
 write_parquet(target_param_table_data, file.path(RESULTS_PATH, "match_outcome_decomp_results.parquet"))
 
-target_param_table_data <- read_parquet(file.path(RESULTS_PATH, "match_outcome_decomp_results.parquet"))
-
-ci_label <- "95\\% CI"
-ci_sym <- rlang::sym(ci_label)
-
-formatted_target_params <- target_param_table_data |>
-    mutate(spec = factor(spec, levels = c("APM", "TWFE", "Difference"))) |>
-    group_by(parameter, spec) |>
-    summarize(
-        estimate = first(estimate),
-        std_error = first(std_error),
-        p_value = first(p_value),
-        ci_lb = first(ci_lb),
-        ci_ub = first(ci_ub),
-        .groups = "drop"
-    ) |>
-    mutate(
-        `Point Est.` = formatC(estimate, format = "f", digits = 3),
-        `Std. Err.` = formatC(std_error, format = "f", digits = 3),
-        `$p$-value` = formatC(p_value, format = "f", digits = 3),
-        !!ci_sym := str_glue("[{formatC(ci_lb, format = 'f', digits = 3)}, {formatC(ci_ub, format = 'f', digits = 3)}]")
-    )
-
-spec_order <- levels(formatted_target_params$spec)
-province_stat_order <- c("Point Est.", "Std. Err.", "$p$-value", ci_label)
-
-province_stats <- formatted_target_params |>
-    filter(parameter == "Province")
-
-extract_spec_values <- function(df, spec_name, stat_order) {
-    spec_row <- df[df$spec == spec_name, , drop = FALSE]
-    if (nrow(spec_row) == 0) {
-        rep(NA_character_, length(stat_order))
-    } else {
-        as.character(unlist(spec_row[1, stat_order], use.names = FALSE))
-    }
-}
-
-target_param_table <- tibble(
-    Parameter = rep("Province", length(province_stat_order)),
-    Statistic = province_stat_order
-)
-
-for (spec_name in spec_order) {
-    target_param_table[[spec_name]] <- extract_spec_values(province_stats, spec_name, province_stat_order)
-}
-
-kbl_data <- target_param_table |>
-    mutate(
-        Statistic = if_else(Statistic == "Point Est.", "Province Share", Statistic)
-    ) |>
-    select(Statistic, all_of(spec_order))
-
-target_param_table_kable <- kbl_data |>
-    kbl(
-        format = "latex",
-        booktabs = TRUE,
-        col.names = c("Statistic", spec_order),
-        align = c("l", rep("c", length(spec_order))),
-        escape = FALSE
-    )
-
-target_param_table_latex <- target_param_table_kable |>
-    as.character() |>
-    str_replace_all("\\{\\}\\[", "[")
-
-writeLines(target_param_table_latex, file.path(TABLES_PATH, "match_outcome_decomp_results.tex"))
+print("Match outcome decomposition results saved to parquet.")
