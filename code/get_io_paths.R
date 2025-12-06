@@ -24,3 +24,8 @@ FIGURES_PATH = file.path(Sys.getenv("OUTPUT_PATH"), "figures")
 if (!dir.exists(FIGURES_PATH)) {
   dir.create(FIGURES_PATH, recursive = TRUE)
 }
+
+TABLES_PATH = file.path(Sys.getenv("OUTPUT_PATH"), "tables")
+if (!dir.exists(TABLES_PATH)) {
+  dir.create(TABLES_PATH, recursive = TRUE)
+}
