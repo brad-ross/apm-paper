@@ -68,16 +68,12 @@ ggsave(file.path(FIGURES_PATH, str_glue("cohort_size_dist_and_num_cohorts_by_k_p
 # Code to plot the largest super cohort size across clusterings for a given rank
 # ============================================================================
 
-firms_per_firm_cluster <- firm_clusters |>
-    group_by(k, province, cluster) |>
-    summarize(num_firms = n_distinct(firm), .groups = "drop")
+firms_per_firm_cluster <- compute_firms_per_cluster(firm_clusters)
 
-outcomes_per_outcome_cluster_df <- panels_with_clustered_outcomes |>
-    .to_arrow_dataset() |>
-    select(k, year, province, cluster, outcome) |>
-    distinct() |>
-    left_join(firms_per_firm_cluster, by = c("k", "province", "cluster")) |>
-    collect()
+outcomes_per_outcome_cluster_df <- build_outcomes_with_firm_counts_df(
+    panels_with_clustered_outcomes, 
+    firms_per_firm_cluster
+)
 
 comp_largest_super_cohort_sizes_across_clusterings <- function(panels_with_clustered_outcomes, rank) {
     panels_with_clustered_outcomes |>
@@ -100,16 +96,10 @@ comp_largest_super_cohort_sizes_across_clusterings <- function(panels_with_clust
         cohort_sizes <- clustered_panel_cohorts$cohort_sizes
         num_cohorts <- length(cohort_sizes)
 
-        outcomes_per_outcome_cluster <- outcomes_per_outcome_cluster_df |>
-            filter(k == curr_k) |>
-            mutate(outcome_idx = match(outcome, clustered_panel_cohorts$outcome_ids)) |>
-            arrange(outcome_idx) |>
-            pull(num_firms)
-
-        print(length(outcomes_per_outcome_cluster))
+        outcomes_per_outcome_cluster <- get_outcome_weights_for_k(
+            outcomes_per_outcome_cluster_df, curr_k, clustered_panel_cohorts$outcome_ids)
 
         num_outcomes <- length(clustered_panel_cohorts$outcome_ids)
-        print(num_outcomes)
         total_outcome_weight <- sum(outcomes_per_outcome_cluster)
 
         id_summary <- summarize_identification(ooi, cohort_sizes, rank, outcome_weights = outcomes_per_outcome_cluster)
@@ -164,11 +154,8 @@ comp_block_missingness_identification_across_clusterings <- function(panels_with
 
             cohort_sizes <- clustered_panel_cohorts$cohort_sizes
 
-            outcomes_per_outcome_cluster <- outcomes_per_outcome_cluster_df |>
-                filter(k == curr_k) |>
-                mutate(outcome_idx = match(outcome, clustered_panel_cohorts$outcome_ids)) |>
-                arrange(outcome_idx) |>
-                pull(num_firms)
+            outcomes_per_outcome_cluster <- get_outcome_weights_for_k(
+                outcomes_per_outcome_cluster_df, curr_k, clustered_panel_cohorts$outcome_ids)
 
             num_outcomes <- length(clustered_panel_cohorts$outcome_ids)
             total_outcome_weight <- sum(outcomes_per_outcome_cluster)
@@ -190,10 +177,6 @@ comp_block_missingness_identification_across_clusterings <- function(panels_with
             )
         })
 }
-
-largest_connected_component_sizes_across_clusterings <- comp_largest_super_cohort_sizes_across_clusterings(panels_with_clustered_outcomes, 1) |>
-    filter(o3_iter == 1) |>
-    mutate(o3_iter = "r=1 final iteration")
 
 create_largest_super_cohort_plot <- function(super_df,
     connected_df,
@@ -247,13 +230,9 @@ create_largest_super_cohort_plot <- function(super_df,
 create_block_missingness_ecdf_plot <- function(df, x_expr, x_label) {
     x_expr <- rlang::enquo(x_expr)
 
-    ggplot(df) +
+    ggplot(df, aes(x = !!x_expr, color = as.factor(k))) +
         theme_bw() +
-        stat_ecdf(aes(
-            x = !!x_expr,
-            weight = cohort_size,
-            color = as.factor(k)
-        )) +
+        stat_ecdf(aes(weight = cohort_size)) +
         scale_color_viridis_d(end = 0.9) +
         scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
         scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
@@ -264,6 +243,10 @@ create_block_missingness_ecdf_plot <- function(df, x_expr, x_label) {
         ) +
         guides(color = guide_legend(ncol = 3))
 }
+
+largest_connected_component_sizes_across_clusterings <- comp_largest_super_cohort_sizes_across_clusterings(panels_with_clustered_outcomes, 1) |>
+    filter(o3_iter == 1) |>
+    mutate(o3_iter = "r=1 final iteration")
 
 for (rank in 2:MAX_RANK) {
     print(paste("Rank:", rank))
@@ -324,7 +307,7 @@ for (rank in 2:MAX_RANK) {
         ))
     ggsave(file.path(FIGURES_PATH, str_glue("num_o3_iterations_needed_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), num_o3_iterations_needed_plot, width = 8, height = 3.25)
 
-    # Plot of distribution of share of cohort outcome means identified across cohorts
+    # Plot of distribution of share of cohort outcome means identified by block missingness across cohorts
 
     block_missingness_identification_across_clusterings <- comp_block_missingness_identification_across_clusterings(
         panels_with_clustered_outcomes,

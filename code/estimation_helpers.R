@@ -96,9 +96,42 @@ get_default_bootstrap <- function(panel, n_draws = 1000, seed = 9001L) {
     get_weighted_bootstrap_draws(panel$get_num_units(), n_draws, type = "bayesian", seed = seed)
 }
 
-# Compute number of firms by outcome for weighting
-compute_num_firms_by_outcome <- function(firm_clusters, panel_df, panel, chosen_k = CHOSEN_K) {
+# Compute number of firms per (k, province, cluster) grouping
+# Returns a data frame with columns: k, province, cluster, num_firms
+compute_firms_per_cluster <- function(firm_clusters) {
     firm_clusters |>
+        group_by(k, province, cluster) |>
+        summarize(
+            num_firms = n_distinct(firm),
+            .groups = "drop"
+        )
+}
+
+# Build a data frame of outcomes with their associated firm counts
+# Joins panel outcomes with firms per cluster information
+build_outcomes_with_firm_counts_df <- function(panels_df, firms_per_cluster_df) {
+    panels_df |>
+        .to_arrow_dataset() |>
+        select(k, year, province, cluster, outcome) |>
+        distinct() |>
+        left_join(firms_per_cluster_df, by = c("k", "province", "cluster")) |>
+        collect()
+}
+
+# Get ordered vector of outcome weights (firm counts) for a specific k
+# Returns a vector of firm counts ordered by outcome_idx
+get_outcome_weights_for_k <- function(outcomes_with_firm_counts_df, curr_k, outcome_ids) {
+    outcomes_with_firm_counts_df |>
+        filter(k == curr_k) |>
+        mutate(outcome_idx = match(outcome, outcome_ids)) |>
+        arrange(outcome_idx) |>
+        pull(num_firms)
+}
+
+# Compute number of firms by outcome for weighting (convenience function)
+# This is a wrapper that combines the above functions for a single k value
+compute_num_firms_by_outcome <- function(firm_clusters, panel_df, panel, chosen_k = CHOSEN_K) {
+    firms_per_cluster <- firm_clusters |>
         filter(k == chosen_k) |>
         group_by(province, cluster) |>
         summarize(

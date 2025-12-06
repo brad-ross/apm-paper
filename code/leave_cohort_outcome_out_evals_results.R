@@ -74,14 +74,12 @@ full_panel_df <- filter_panel_by_k(clustered_panels)
 
 # Load firm clusters and compute sizes
 firm_clusters <- load_firm_clusters()
-firm_cluster_sizes <- firm_clusters |>
-    filter(k == CHOSEN_K) |>
-    group_by(province, cluster) |>
-    summarize(
-        firms_for_outcome = n(),
-        .groups = "drop"
-    ) |>
-    inner_join(full_panel_df |> select(province, cluster, outcome) |> distinct(), by = c("province", "cluster")) |>
+firms_per_cluster <- compute_firms_per_cluster(firm_clusters) |>
+    filter(k == CHOSEN_K)
+firm_cluster_sizes <- firms_per_cluster |>
+    inner_join(full_panel_df |> select(province, cluster, outcome) |> distinct(), 
+               by = c("province", "cluster")) |>
+    rename(firms_for_outcome = num_firms) |>
     ungroup()
 
 # We need panel to get outcome_to_index mapping - create a minimal version
