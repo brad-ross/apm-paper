@@ -3,6 +3,8 @@ devtools::load_all("../apm-package/r")
 source("code/vwh_data_helpers.R")
 source("code/get_io_paths.R")
 
+library(tidyverse)
+library(arrow)
 library(kableExtra)
 
 wtd_quantile <- function(x, weights = NULL, probs = c(0.25, 0.5, 0.75),
@@ -63,9 +65,6 @@ num_threads <- as.integer(Sys.getenv("APM_MAX_THREADS"))
 if (is.na(num_threads)) {
     num_threads <- NULL
 }
-
-library(tidyverse)
-library(arrow)
 
 FIRST_YEAR <- as.integer(Sys.getenv("FIRST_YEAR"))
 LAST_YEAR <- as.integer(Sys.getenv("LAST_YEAR"))
