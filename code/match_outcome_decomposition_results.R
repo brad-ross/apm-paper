@@ -104,4 +104,4 @@ for (i in seq_len(nrow(target_param_table_data))) {
         str_glue("fgw_decomp_{param_name}_{spec_name}_ci_ub.txt"))
 }
 
-print(str_glue("Match outcome decomposition result snippets saved to {RESULT_SNIPPETS_PATH}"))
+print(str_glue("Match outcome decomposition result snippets saved to {SNIPPETS_PATH}"))

@@ -273,4 +273,4 @@ for (i in seq_len(nrow(eval_table_data))) {
     write_result_snippet(format_decimal(row$value), filename)
 }
 
-print(str_glue("Evaluation result snippets saved to {RESULT_SNIPPETS_PATH}"))
+print(str_glue("Evaluation result snippets saved to {SNIPPETS_PATH}"))

@@ -13,6 +13,6 @@ format_pct <- function(x) sprintf("%.1f\\%%", x * 100)
 format_decimal <- function(x, digits = 2) sprintf(paste0("%.", digits, "f"), round(x, digits))
 
 # Write a single value to a text file
-write_result_snippet <- function(value, filename, path = RESULT_SNIPPETS_PATH) {
+write_result_snippet <- function(value, filename, path = SNIPPETS_PATH) {
     writeLines(as.character(value), file.path(path, filename))
 }

@@ -568,6 +568,6 @@ write_result_snippet(LAST_YEAR, "last_year.txt")
 # YEAR_CLUSTER_SIZE
 write_result_snippet(YEAR_CLUSTER_SIZE, "year_cluster_size.txt")
 
-print(str_glue("Result snippets saved to {RESULT_SNIPPETS_PATH}"))
+print(str_glue("Result snippets saved to {SNIPPETS_PATH}"))
 
 print("All figures and tables saved successfully.")
