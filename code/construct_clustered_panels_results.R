@@ -409,23 +409,67 @@ largest_super_cohort_stats <- list(
 # Format numbers with commas
 format_num <- function(x) formatC(x, format = "d", big.mark = ",")
 
+# Format percentages
+format_pct <- function(x) sprintf("%.1f\\%%", x * 100)
+
+# Compute share of workers with k observations
+compute_obs_shares <- function(panel, worker_col = "worker") {
+    obs_per_worker <- panel |>
+        group_by(across(all_of(worker_col))) |>
+        summarize(n_obs = n(), .groups = "drop")
+    
+    total_workers <- nrow(obs_per_worker)
+    
+    list(
+        share_2_obs = sum(obs_per_worker$n_obs == 2) / total_workers,
+        share_3_obs = sum(obs_per_worker$n_obs == 3) / total_workers,
+        share_4_obs = sum(obs_per_worker$n_obs == 4) / total_workers,
+        share_5plus_obs = sum(obs_per_worker$n_obs >= 5) / total_workers
+    )
+}
+
+# Compute observation shares for each panel
+full_panel_obs_shares <- compute_obs_shares(full_panel)
+always_present_obs_shares <- compute_obs_shares(always_present_panel)
+largest_super_cohort_obs_shares <- compute_obs_shares(largest_super_cohort_panel)
+
 # Create the summary statistics table
 summary_stats_df <- tibble(
-    Statistic = c("Num. Employment Spells", "Num. Workers", "Num. Firms"),
+    Statistic = c(
+        "Num. Employment Spells",
+        "Num. Workers",
+        "Num. Firms",
+        "\\% Workers w/ 2 Spells",
+        "\\% Workers w/ 3 Spells",
+        "\\% Workers w/ 4 Spells",
+        "\\% Workers w/ 5+ Spells"
+    ),
     `Full Panel` = c(
         format_num(full_panel_stats$num_observations),
         format_num(full_panel_stats$num_workers),
-        format_num(full_panel_stats$num_firms)
+        format_num(full_panel_stats$num_firms),
+        format_pct(full_panel_obs_shares$share_2_obs),
+        format_pct(full_panel_obs_shares$share_3_obs),
+        format_pct(full_panel_obs_shares$share_4_obs),
+        format_pct(full_panel_obs_shares$share_5plus_obs)
     ),
     `Always-Present` = c(
         format_num(always_present_stats$num_observations),
         format_num(always_present_stats$num_workers),
-        format_num(always_present_stats$num_firms)
+        format_num(always_present_stats$num_firms),
+        format_pct(always_present_obs_shares$share_2_obs),
+        format_pct(always_present_obs_shares$share_3_obs),
+        format_pct(always_present_obs_shares$share_4_obs),
+        format_pct(always_present_obs_shares$share_5plus_obs)
     ),
     `Largest Super Cohort` = c(
         format_num(largest_super_cohort_stats$num_observations),
         format_num(largest_super_cohort_stats$num_workers),
-        format_num(largest_super_cohort_stats$num_firms)
+        format_num(largest_super_cohort_stats$num_firms),
+        format_pct(largest_super_cohort_obs_shares$share_2_obs),
+        format_pct(largest_super_cohort_obs_shares$share_3_obs),
+        format_pct(largest_super_cohort_obs_shares$share_4_obs),
+        format_pct(largest_super_cohort_obs_shares$share_5plus_obs)
     )
 )
 
@@ -435,7 +479,8 @@ summary_stats_table_latex <- summary_stats_df |>
         format = "latex",
         booktabs = TRUE,
         align = c("l", "r", "r", "r"),
-        escape = FALSE
+        escape = FALSE,
+        linesep = ""
     ) |>
     as.character()
 
