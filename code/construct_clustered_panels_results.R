@@ -9,6 +9,7 @@ source("code/vwh_data_helpers.R")
 source("code/get_io_paths.R")
 source("code/env_config.R")
 source("code/estimation_helpers.R")
+source("code/text_formatting_helpers.R")
 
 library(tidyverse)
 library(arrow)
@@ -406,12 +407,6 @@ largest_super_cohort_stats <- list(
     num_firms = length(firms_in_largest_super_cohort)
 )
 
-# Format numbers with commas
-format_num <- function(x) formatC(x, format = "d", big.mark = ",")
-
-# Format percentages
-format_pct <- function(x) sprintf("%.1f\\%%", x * 100)
-
 # Compute share of workers with k observations
 compute_obs_shares <- function(panel, worker_col = "worker") {
     obs_per_worker <- panel |>
@@ -544,44 +539,34 @@ print(str_glue("Firms by province and cluster dot plot saved to {FIGURES_PATH}")
 # ============================================================================
 
 # Number of employment spells for largest super cohort panel
-writeLines(format_num(largest_super_cohort_stats$num_observations), 
-    file.path(RESULT_SNIPPETS_PATH, "num_obs.txt"))
+write_result_snippet(format_num(largest_super_cohort_stats$num_observations), "num_obs.txt")
 
 # Number of workers for largest super cohort panel
-writeLines(format_num(largest_super_cohort_stats$num_workers), 
-    file.path(RESULT_SNIPPETS_PATH, "num_workers.txt"))
+write_result_snippet(format_num(largest_super_cohort_stats$num_workers), "num_workers.txt")
 
 # Number of firms for largest super cohort panel
-writeLines(format_num(largest_super_cohort_stats$num_firms), 
-    file.path(RESULT_SNIPPETS_PATH, "num_firms.txt"))
+write_result_snippet(format_num(largest_super_cohort_stats$num_firms), "num_firms.txt")
 
 # Number of outcomes in the CHOSEN_K largest super cohort panel
-writeLines(format_num(length(cohorts_for_chosen_k$outcome_ids)), 
-    file.path(RESULT_SNIPPETS_PATH, "num_outcomes.txt"))
+write_result_snippet(format_num(length(cohorts_for_chosen_k$outcome_ids)), "num_outcomes.txt")
 
 # Number of cohorts in the CHOSEN_K largest super cohort panel
-writeLines(format_num(length(cohorts_for_chosen_k$cohort_sizes)), 
-    file.path(RESULT_SNIPPETS_PATH, "num_cohorts.txt"))
+write_result_snippet(format_num(length(cohorts_for_chosen_k$cohort_sizes)), "num_cohorts.txt")
 
 # CHOSEN_K
-writeLines(as.character(CHOSEN_K), 
-    file.path(RESULT_SNIPPETS_PATH, "chosen_k.txt"))
+write_result_snippet(CHOSEN_K, "chosen_k.txt")
 
 # MIN_COHORT_SIZE
-writeLines(format_num(MIN_COHORT_SIZE), 
-    file.path(RESULT_SNIPPETS_PATH, "min_cohort_size.txt"))
+write_result_snippet(format_num(MIN_COHORT_SIZE), "min_cohort_size.txt")
 
 # FIRST_YEAR
-writeLines(as.character(FIRST_YEAR), 
-    file.path(RESULT_SNIPPETS_PATH, "first_year.txt"))
+write_result_snippet(FIRST_YEAR, "first_year.txt")
 
 # LAST_YEAR
-writeLines(as.character(LAST_YEAR), 
-    file.path(RESULT_SNIPPETS_PATH, "last_year.txt"))
+write_result_snippet(LAST_YEAR, "last_year.txt")
 
 # YEAR_CLUSTER_SIZE
-writeLines(as.character(YEAR_CLUSTER_SIZE), 
-    file.path(RESULT_SNIPPETS_PATH, "year_cluster_size.txt"))
+write_result_snippet(YEAR_CLUSTER_SIZE, "year_cluster_size.txt")
 
 print(str_glue("Result snippets saved to {RESULT_SNIPPETS_PATH}"))
 
