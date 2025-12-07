@@ -86,21 +86,22 @@ print(str_glue("Table written to {file.path(TABLES_PATH, 'match_outcome_decomp_r
 # ============================================================================
 
 # Output each statistic from the decomposition results
-# Format: {parameter}_{spec}_{statistic}.txt
+# Format: fgw_decomp_{parameter}_{spec}_{statistic}.txt
+# Note: estimates, std errors, and CIs are multiplied by 100 to convert shares to percentage points
 for (i in seq_len(nrow(target_param_table_data))) {
     row <- target_param_table_data[i, ]
     param_name <- tolower(gsub(" ", "_", row$parameter))
     spec_name <- tolower(row$spec)
     
-    write_result_snippet(format_decimal(row$estimate, 3), 
+    write_result_snippet(format_decimal(row$estimate * 100, 3), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_estimate.txt"))
-    write_result_snippet(format_decimal(row$std_error, 3), 
+    write_result_snippet(format_decimal(row$std_error * 100, 3), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_std_error.txt"))
     write_result_snippet(format_decimal(row$p_value, 3), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_p_value.txt"))
-    write_result_snippet(format_decimal(row$ci_lb, 3), 
+    write_result_snippet(format_decimal(row$ci_lb * 100, 3), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_ci_lb.txt"))
-    write_result_snippet(format_decimal(row$ci_ub, 3), 
+    write_result_snippet(format_decimal(row$ci_ub * 100, 3), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_ci_ub.txt"))
 }
 

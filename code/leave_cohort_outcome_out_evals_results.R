@@ -270,7 +270,7 @@ print(str_glue("Table written to {file.path(TABLES_PATH, 'leave_cohort_outcome_o
 for (i in seq_len(nrow(eval_table_data))) {
     row <- eval_table_data[i, ]
     filename <- str_glue("{row$spec}_{row$err_stat}_{row$metric}.txt")
-    write_result_snippet(format_decimal(row$value), filename)
+    write_result_snippet(format_pct(row$value), filename)
 }
 
 print(str_glue("Evaluation result snippets saved to {SNIPPETS_PATH}"))
