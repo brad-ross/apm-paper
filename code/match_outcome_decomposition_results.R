@@ -4,6 +4,7 @@
 # and generates LaTeX tables for the paper.
 
 source("code/get_io_paths.R")
+source("code/text_formatting_helpers.R")
 
 library(tidyverse)
 library(arrow)
@@ -79,3 +80,28 @@ target_param_table_latex <- target_param_table_kable |>
 writeLines(target_param_table_latex, file.path(TABLES_PATH, "match_outcome_decomp_results.tex"))
 
 print(str_glue("Table written to {file.path(TABLES_PATH, 'match_outcome_decomp_results.tex')}"))
+
+# ============================================================================
+# Output single-statistic result snippets for match outcome decomposition
+# ============================================================================
+
+# Output each statistic from the decomposition results
+# Format: {parameter}_{spec}_{statistic}.txt
+for (i in seq_len(nrow(target_param_table_data))) {
+    row <- target_param_table_data[i, ]
+    param_name <- tolower(gsub(" ", "_", row$parameter))
+    spec_name <- tolower(row$spec)
+    
+    write_result_snippet(format_decimal(row$estimate, 3), 
+        str_glue("fgw_decomp_{param_name}_{spec_name}_estimate.txt"))
+    write_result_snippet(format_decimal(row$std_error, 3), 
+        str_glue("fgw_decomp_{param_name}_{spec_name}_std_error.txt"))
+    write_result_snippet(format_decimal(row$p_value, 3), 
+        str_glue("fgw_decomp_{param_name}_{spec_name}_p_value.txt"))
+    write_result_snippet(format_decimal(row$ci_lb, 3), 
+        str_glue("fgw_decomp_{param_name}_{spec_name}_ci_lb.txt"))
+    write_result_snippet(format_decimal(row$ci_ub, 3), 
+        str_glue("fgw_decomp_{param_name}_{spec_name}_ci_ub.txt"))
+}
+
+print(str_glue("Match outcome decomposition result snippets saved to {RESULT_SNIPPETS_PATH}"))
