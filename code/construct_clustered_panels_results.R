@@ -368,10 +368,46 @@ always_present_stats <- list(
     num_firms = n_distinct(always_present_panel$firm)
 )
 
-# Column 3: Largest super cohort for k = CHOSEN_K
+# Column 3: All cohorts meeting MIN_COHORT_SIZE for k = CHOSEN_K (not restricted to largest super cohort)
 panel_with_chosen_k <- panels_with_clustered_outcomes |>
     filter(k == CHOSEN_K)
 
+all_cohorts_for_chosen_k <- construct_cohorts_from_panel(
+    panel_with_chosen_k,
+    "worker", "outcome", "avg_weekly_earnings",
+    model_rank = MAX_RANK,
+    min_cohort_size = MIN_COHORT_SIZE,
+    subset_to_largest_super_cohort = FALSE
+)
+
+# Get the workers in all cohorts meeting MIN_COHORT_SIZE
+workers_in_all_cohorts <- unique(all_cohorts_for_chosen_k$unit_cohorts$unit_id)
+
+# Get the firms in all cohorts by matching outcomes back to firm clusters
+outcomes_in_all_cohorts <- all_cohorts_for_chosen_k$outcome_ids
+outcome_parts_all <- strsplit(outcomes_in_all_cohorts, ":")
+outcome_df_all <- data.frame(
+    year = as.integer(sapply(outcome_parts_all, `[[`, 1)),
+    province = sapply(outcome_parts_all, `[[`, 2),
+    cluster = as.integer(sapply(outcome_parts_all, `[[`, 3))
+)
+
+firms_in_all_cohorts <- firm_clusters |>
+    filter(k == CHOSEN_K) |>
+    inner_join(outcome_df_all, by = c("province", "cluster")) |>
+    distinct(firm) |>
+    pull(firm)
+
+all_cohorts_panel <- panel_with_chosen_k |>
+    filter(worker %in% workers_in_all_cohorts)
+
+all_cohorts_stats <- list(
+    num_observations = nrow(all_cohorts_panel),
+    num_workers = length(workers_in_all_cohorts),
+    num_firms = length(firms_in_all_cohorts)
+)
+
+# Column 4: Largest super cohort for k = CHOSEN_K
 cohorts_for_chosen_k <- construct_cohorts_from_panel(
     panel_with_chosen_k,
     "worker", "outcome", "avg_weekly_earnings",
@@ -426,6 +462,7 @@ compute_obs_shares <- function(panel, worker_col = "worker") {
 # Compute observation shares for each panel
 full_panel_obs_shares <- compute_obs_shares(full_panel)
 always_present_obs_shares <- compute_obs_shares(always_present_panel)
+all_cohorts_obs_shares <- compute_obs_shares(all_cohorts_panel)
 largest_super_cohort_obs_shares <- compute_obs_shares(largest_super_cohort_panel)
 
 # Create the summary statistics table
@@ -448,7 +485,7 @@ summary_stats_df <- tibble(
         format_pct(full_panel_obs_shares$share_4_obs),
         format_pct(full_panel_obs_shares$share_5plus_obs)
     ),
-    `Always-Present` = c(
+    `\\makecell{Always-Present\\\\Workers, Firms}` = c(
         format_num(always_present_stats$num_observations),
         format_num(always_present_stats$num_workers),
         format_num(always_present_stats$num_firms),
@@ -457,7 +494,16 @@ summary_stats_df <- tibble(
         format_pct(always_present_obs_shares$share_4_obs),
         format_pct(always_present_obs_shares$share_5plus_obs)
     ),
-    `Largest Super Cohort` = c(
+    `\\makecell{Cohorts Above\\\\Min. Size}` = c(
+        format_num(all_cohorts_stats$num_observations),
+        format_num(all_cohorts_stats$num_workers),
+        format_num(all_cohorts_stats$num_firms),
+        format_pct(all_cohorts_obs_shares$share_2_obs),
+        format_pct(all_cohorts_obs_shares$share_3_obs),
+        format_pct(all_cohorts_obs_shares$share_4_obs),
+        format_pct(all_cohorts_obs_shares$share_5plus_obs)
+    ),
+    `\\makecell{Largest Super\\\\Cohort}` = c(
         format_num(largest_super_cohort_stats$num_observations),
         format_num(largest_super_cohort_stats$num_workers),
         format_num(largest_super_cohort_stats$num_firms),
@@ -473,7 +519,7 @@ summary_stats_table_latex <- summary_stats_df |>
     kbl(
         format = "latex",
         booktabs = TRUE,
-        align = c("l", "r", "r", "r"),
+        align = c("l", "c", "c", "c", "c"),
         escape = FALSE,
         linesep = ""
     ) |>
