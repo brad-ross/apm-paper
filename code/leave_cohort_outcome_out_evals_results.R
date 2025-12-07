@@ -7,6 +7,7 @@ source("code/vwh_data_helpers.R")
 source("code/get_io_paths.R")
 source("code/env_config.R")
 source("code/estimation_helpers.R")
+source("code/text_formatting_helpers.R")
 
 library(tidyverse)
 library(arrow)
@@ -259,3 +260,17 @@ eval_table_latex <- eval_table_latex |>
 writeLines(eval_table_latex, file.path(TABLES_PATH, "leave_cohort_outcome_out_evals_results.tex"))
 
 print(str_glue("Table written to {file.path(TABLES_PATH, 'leave_cohort_outcome_out_evals_results.tex')}"))
+
+# ============================================================================
+# Output single-statistic result snippets for evaluation metrics
+# ============================================================================
+
+# Output each cell value from the evaluation table
+# Format: {spec}_{err_stat}_{metric}.txt
+for (i in seq_len(nrow(eval_table_data))) {
+    row <- eval_table_data[i, ]
+    filename <- str_glue("{row$spec}_{row$err_stat}_{row$metric}.txt")
+    write_result_snippet(format_decimal(row$value), filename)
+}
+
+print(str_glue("Evaluation result snippets saved to {RESULT_SNIPPETS_PATH}"))
