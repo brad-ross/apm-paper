@@ -93,15 +93,15 @@ for (i in seq_len(nrow(target_param_table_data))) {
     param_name <- tolower(gsub(" ", "_", row$parameter))
     spec_name <- tolower(row$spec)
     
-    write_result_snippet(format_decimal(row$estimate * 100, 3), 
+    write_result_snippet(format_decimal(row$estimate * 100, 1), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_estimate.txt"))
-    write_result_snippet(format_decimal(row$std_error * 100, 3), 
+    write_result_snippet(format_decimal(row$std_error * 100, 1), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_std_error.txt"))
     write_result_snippet(format_decimal(row$p_value, 3), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_p_value.txt"))
-    write_result_snippet(format_decimal(row$ci_lb * 100, 3), 
+    write_result_snippet(format_decimal(row$ci_lb * 100, 1), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_ci_lb.txt"))
-    write_result_snippet(format_decimal(row$ci_ub * 100, 3), 
+    write_result_snippet(format_decimal(row$ci_ub * 100, 1), 
         str_glue("fgw_decomp_{param_name}_{spec_name}_ci_ub.txt"))
 }
 
