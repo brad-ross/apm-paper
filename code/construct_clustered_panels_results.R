@@ -64,7 +64,7 @@ cohort_size_dist_and_num_cohorts_by_k_plot <- (ggplot(cohorts_by_k |> mutate(k =
     + guides(color = guide_legend(ncol = 3))
 )
 
-ggsave(file.path(FIGURES_PATH, str_glue("cohort_size_dist_and_num_cohorts_by_k_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}.pdf")), cohort_size_dist_and_num_cohorts_by_k_plot, width = 8, height = 3.25)
+ggsave(file.path(FIGURES_PATH, str_glue("cohort_size_dist_and_num_cohorts_by_k_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}.pdf")), cohort_size_dist_and_num_cohorts_by_k_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
 
 # ============================================================================
 # Code to plot the largest super cohort size across clusterings for a given rank
@@ -274,8 +274,8 @@ for (rank in 2:MAX_RANK) {
             str_glue("largest_super_cohort_share_workers_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")
         ),
         largest_super_cohort_share_workers_plot,
-        width = 4,
-        height = 3.25
+        width = PAPER_FIG_HALF_WIDTH,
+        height = PAPER_FIG_HEIGHT
     )
 
     largest_super_cohort_share_firms_plot <- create_largest_super_cohort_plot(
@@ -293,8 +293,8 @@ for (rank in 2:MAX_RANK) {
             str_glue("largest_super_cohort_share_firms_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")
         ),
         largest_super_cohort_share_firms_plot,
-        width = 4,
-        height = 3.25
+        width = PAPER_FIG_HALF_WIDTH,
+        height = PAPER_FIG_HEIGHT
     )
 
     num_o3_iterations_needed_plot <- (ggplot(largest_super_cohort_sizes_across_clusterings |>
@@ -307,7 +307,7 @@ for (rank in 2:MAX_RANK) {
             x = "# of Firm Clusters per Province",
             y = "# of O³ Iterations until Convergence",
         ))
-    ggsave(file.path(FIGURES_PATH, str_glue("num_o3_iterations_needed_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), num_o3_iterations_needed_plot, width = 8, height = 3.25)
+    ggsave(file.path(FIGURES_PATH, str_glue("num_o3_iterations_needed_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), num_o3_iterations_needed_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
 
     # Plot of distribution of share of cohort outcome means identified by block missingness across cohorts
 
@@ -322,7 +322,7 @@ for (rank in 2:MAX_RANK) {
         x_label = "Share of Cohort's Outcome Means Identified by Block Missingness"
     )
 
-    ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), block_missingness_id_plot, width = 8, height = 3.25)
+    ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), block_missingness_id_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
 
     firm_weighted_block_missingness_id_plot <- create_block_missingness_ecdf_plot(
         df = block_missingness_identification_across_clusterings,
@@ -330,7 +330,7 @@ for (rank in 2:MAX_RANK) {
         x_label = "Share of Cohort's Avg. Wages Across Firms Identified by Block Missingness"
     )
 
-    ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_firm_weighted_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), firm_weighted_block_missingness_id_plot, width = 8, height = 3.25)
+    ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_firm_weighted_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), firm_weighted_block_missingness_id_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
 }
 
 # ============================================================================
@@ -528,8 +528,8 @@ ggsave(
     file.path(FIGURES_PATH, 
         str_glue("firms_by_province_cluster_dot_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_k={CHOSEN_K}.pdf")),
     firms_by_province_cluster_dot_plot,
-    width = 8,
-    height = 3.5
+    width = PAPER_FIG_WIDTH,
+    height = PAPER_FIG_HEIGHT
 )
 
 print(str_glue("Firms by province and cluster dot plot saved to {FIGURES_PATH}"))

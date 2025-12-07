@@ -22,3 +22,8 @@ num_threads <- as.integer(Sys.getenv("APM_MAX_THREADS"))
 if (is.na(num_threads)) {
     num_threads <- NULL
 }
+
+# Figure dimensions for paper
+PAPER_FIG_HEIGHT <- 3.5
+PAPER_FIG_WIDTH <- 8
+PAPER_FIG_HALF_WIDTH <- PAPER_FIG_WIDTH / 2
