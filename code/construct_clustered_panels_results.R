@@ -12,6 +12,7 @@ source("code/estimation_helpers.R")
 
 library(tidyverse)
 library(arrow)
+library(kableExtra)
 
 # Read clustering data
 firm_clusters <- load_firm_clusters()
@@ -331,4 +332,166 @@ for (rank in 2:MAX_RANK) {
     ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_firm_weighted_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), firm_weighted_block_missingness_id_plot, width = 8, height = 3.25)
 }
 
-print("All figures saved successfully.")
+# ============================================================================
+# Generate summary statistics table comparing panel subsets
+# ============================================================================
+
+# Load raw data for full panel statistics
+raw_earnings <- read_raw_earnings_data()
+raw_firms <- read_raw_firm_data()
+
+# Column 1: Full panel (all data from FIRST_YEAR to LAST_YEAR)
+# Collapse multiple spells to one observation per worker-firm-year cluster
+full_panel <- filter_and_join_match_data(raw_earnings, raw_firms, FIRST_YEAR, LAST_YEAR, VENETO_PROVINCES) |>
+    group_years("year", YEAR_CLUSTER_SIZE) |>
+    constr_avg_weekly_wages_by_group(c("year", "province", "firm"), collect = TRUE) |>
+    filter(avg_weekly_earnings > 0)
+
+full_panel_stats <- list(
+    num_observations = nrow(full_panel),
+    num_workers = n_distinct(full_panel$worker),
+    num_firms = n_distinct(full_panel$firm)
+)
+
+# Column 2: Always present workers and firms
+# Collapse multiple spells to one observation per worker-firm-year cluster, then filter
+always_present_panel <- filter_and_join_match_data(raw_earnings, raw_firms, FIRST_YEAR, LAST_YEAR, VENETO_PROVINCES) |>
+    group_years("year", YEAR_CLUSTER_SIZE) |>
+    constr_avg_weekly_wages_by_group(c("year", "province", "firm")) |>
+    filter(avg_weekly_earnings > 0) |>
+    filter_to_always_present_workers_and_firms(collect = TRUE)
+
+always_present_stats <- list(
+    num_observations = nrow(always_present_panel),
+    num_workers = n_distinct(always_present_panel$worker),
+    num_firms = n_distinct(always_present_panel$firm)
+)
+
+# Column 3: Largest super cohort for k = CHOSEN_K
+panel_with_chosen_k <- panels_with_clustered_outcomes |>
+    filter(k == CHOSEN_K)
+
+cohorts_for_chosen_k <- construct_cohorts_from_panel(
+    panel_with_chosen_k,
+    "worker", "outcome", "avg_weekly_earnings",
+    model_rank = MAX_RANK,
+    min_cohort_size = MIN_COHORT_SIZE,
+    subset_to_largest_super_cohort = TRUE
+)
+
+# Get the workers in the largest super cohort
+workers_in_largest_super_cohort <- unique(cohorts_for_chosen_k$unit_cohorts$unit_id)
+
+# Get the firms in the largest super cohort by matching outcomes back to firm clusters
+outcomes_in_largest_super_cohort <- cohorts_for_chosen_k$outcome_ids
+outcome_parts <- strsplit(outcomes_in_largest_super_cohort, ":")
+outcome_df <- data.frame(
+    year = as.integer(sapply(outcome_parts, `[[`, 1)),
+    province = sapply(outcome_parts, `[[`, 2),
+    cluster = as.integer(sapply(outcome_parts, `[[`, 3))
+)
+
+firms_in_largest_super_cohort <- firm_clusters |>
+    filter(k == CHOSEN_K) |>
+    inner_join(outcome_df, by = c("province", "cluster")) |>
+    distinct(firm) |>
+    pull(firm)
+
+largest_super_cohort_panel <- panel_with_chosen_k |>
+    filter(worker %in% workers_in_largest_super_cohort)
+
+largest_super_cohort_stats <- list(
+    num_observations = nrow(largest_super_cohort_panel),
+    num_workers = length(workers_in_largest_super_cohort),
+    num_firms = length(firms_in_largest_super_cohort)
+)
+
+# Format numbers with commas
+format_num <- function(x) formatC(x, format = "d", big.mark = ",")
+
+# Create the summary statistics table
+summary_stats_df <- tibble(
+    Statistic = c("Num. Employment Spells", "Num. Workers", "Num. Firms"),
+    `Full Panel` = c(
+        format_num(full_panel_stats$num_observations),
+        format_num(full_panel_stats$num_workers),
+        format_num(full_panel_stats$num_firms)
+    ),
+    `Always-Present` = c(
+        format_num(always_present_stats$num_observations),
+        format_num(always_present_stats$num_workers),
+        format_num(always_present_stats$num_firms)
+    ),
+    `Largest Super Cohort` = c(
+        format_num(largest_super_cohort_stats$num_observations),
+        format_num(largest_super_cohort_stats$num_workers),
+        format_num(largest_super_cohort_stats$num_firms)
+    )
+)
+
+# Generate LaTeX table
+summary_stats_table_latex <- summary_stats_df |>
+    kbl(
+        format = "latex",
+        booktabs = TRUE,
+        align = c("l", "r", "r", "r"),
+        escape = FALSE
+    ) |>
+    as.character()
+
+writeLines(summary_stats_table_latex, file.path(TABLES_PATH, 
+    str_glue("panel_summary_stats_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.tex")))
+
+print(str_glue("Summary statistics table saved to {TABLES_PATH}"))
+
+# ============================================================================
+# Dot plot of number of firms by province and cluster for k = CHOSEN_K
+# ============================================================================
+
+firms_by_province_cluster <- firms_per_firm_cluster |>
+    filter(k == CHOSEN_K) |>
+    mutate(
+        province = factor(province, levels = sort(unique(province))),
+        cluster = as.character(cluster),
+        is_total = FALSE
+    )
+
+# Add province totals
+province_totals <- firms_by_province_cluster |>
+    group_by(province) |>
+    summarize(num_firms = sum(num_firms), .groups = "drop") |>
+    mutate(cluster = "Total", is_total = TRUE)
+
+firms_by_province_cluster <- bind_rows(firms_by_province_cluster, province_totals) |>
+    mutate(cluster = factor(cluster, levels = c(as.character(sort(unique(as.integer(
+        firms_by_province_cluster$cluster[firms_by_province_cluster$cluster != "Total"])))), "Total")))
+
+firms_by_province_cluster_dot_plot <- ggplot(firms_by_province_cluster, 
+    aes(x = cluster, y = num_firms, color = province, shape = is_total)) +
+    theme_bw() +
+    geom_point(size = 3, alpha = 0.8) +
+    facet_wrap(~ province, nrow = 1, scales = "free_x") +
+    scale_color_viridis_d(end = 0.9) +
+    scale_shape_manual(values = c("FALSE" = 16, "TRUE" = 17), guide = "none") +
+    labs(
+        x = "Firm Cluster",
+        y = "Number of Firms",
+        color = "Province"
+    ) +
+    theme(
+        legend.position = "none",
+        strip.background = element_rect(fill = "grey90"),
+        axis.text.x = element_text(size = 8)
+    )
+
+ggsave(
+    file.path(FIGURES_PATH, 
+        str_glue("firms_by_province_cluster_dot_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_k={CHOSEN_K}.pdf")),
+    firms_by_province_cluster_dot_plot,
+    width = 8,
+    height = 3.5
+)
+
+print(str_glue("Firms by province and cluster dot plot saved to {FIGURES_PATH}"))
+
+print("All figures and tables saved successfully.")
