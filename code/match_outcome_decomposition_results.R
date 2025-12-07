@@ -31,7 +31,7 @@ formatted_target_params <- target_param_table_data |>
         `Point Est.` = formatC(estimate, format = "f", digits = 3),
         `Std. Err.` = formatC(std_error, format = "f", digits = 3),
         `$p$-value` = formatC(p_value, format = "f", digits = 3),
-        !!ci_sym := str_glue("[{formatC(ci_lb, format = 'f', digits = 3)}, {formatC(ci_ub, format = 'f', digits = 3)}]")
+        !!ci_sym := str_glue("\\makecell{{[{formatC(ci_lb, format = 'f', digits = 3)}, \\\\ \\;{formatC(ci_ub, format = 'f', digits = 3)}]}}")
     )
 
 spec_order <- levels(formatted_target_params$spec)
