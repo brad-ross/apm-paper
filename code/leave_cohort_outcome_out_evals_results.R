@@ -137,6 +137,7 @@ eval_table_data <- twfe_comparisons |>
         share_better = sum((value_ratio <= 1)*cohort_outcome_weight)/sum(cohort_outcome_weight),
         .groups = "drop"
     ) |>
+    mutate(avg_pct_better = 1 - geom_mean_value_ratio) |>
     pivot_longer(-c(spec, err_stat), names_to = "metric") |>
     inner_join(est_specs_to_table, by = "spec")
 
@@ -147,6 +148,7 @@ spec_meta <- eval_table_data |>
 spec_levels <- spec_meta$spec
 
 eval_table_wide <- eval_table_data |>
+    filter(metric %in% c("geom_mean_value_ratio", "share_better")) |>
     mutate(
         err_stat = factor(err_stat, levels = c("bias", "se", "rmse")),
         metric = factor(metric, levels = c("geom_mean_value_ratio", "share_better"))
