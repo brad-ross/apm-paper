@@ -539,4 +539,50 @@ ggsave(
 
 print(str_glue("Firms by province and cluster dot plot saved to {FIGURES_PATH}"))
 
+# ============================================================================
+# Output single-statistic result snippets to text files
+# ============================================================================
+
+# Number of employment spells for largest super cohort panel
+writeLines(format_num(largest_super_cohort_stats$num_observations), 
+    file.path(RESULT_SNIPPETS_PATH, "num_obs.txt"))
+
+# Number of workers for largest super cohort panel
+writeLines(format_num(largest_super_cohort_stats$num_workers), 
+    file.path(RESULT_SNIPPETS_PATH, "num_workers.txt"))
+
+# Number of firms for largest super cohort panel
+writeLines(format_num(largest_super_cohort_stats$num_firms), 
+    file.path(RESULT_SNIPPETS_PATH, "num_firms.txt"))
+
+# Number of outcomes in the CHOSEN_K largest super cohort panel
+writeLines(format_num(length(cohorts_for_chosen_k$outcome_ids)), 
+    file.path(RESULT_SNIPPETS_PATH, "num_outcomes.txt"))
+
+# Number of cohorts in the CHOSEN_K largest super cohort panel
+writeLines(format_num(length(cohorts_for_chosen_k$cohort_sizes)), 
+    file.path(RESULT_SNIPPETS_PATH, "num_cohorts.txt"))
+
+# CHOSEN_K
+writeLines(as.character(CHOSEN_K), 
+    file.path(RESULT_SNIPPETS_PATH, "chosen_k.txt"))
+
+# MIN_COHORT_SIZE
+writeLines(format_num(MIN_COHORT_SIZE), 
+    file.path(RESULT_SNIPPETS_PATH, "min_cohort_size.txt"))
+
+# FIRST_YEAR
+writeLines(as.character(FIRST_YEAR), 
+    file.path(RESULT_SNIPPETS_PATH, "first_year.txt"))
+
+# LAST_YEAR
+writeLines(as.character(LAST_YEAR), 
+    file.path(RESULT_SNIPPETS_PATH, "last_year.txt"))
+
+# YEAR_CLUSTER_SIZE
+writeLines(as.character(YEAR_CLUSTER_SIZE), 
+    file.path(RESULT_SNIPPETS_PATH, "year_cluster_size.txt"))
+
+print(str_glue("Result snippets saved to {RESULT_SNIPPETS_PATH}"))
+
 print("All figures and tables saved successfully.")

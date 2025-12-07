@@ -29,3 +29,8 @@ TABLES_PATH = file.path(Sys.getenv("OUTPUT_PATH"), "tables")
 if (!dir.exists(TABLES_PATH)) {
   dir.create(TABLES_PATH, recursive = TRUE)
 }
+
+RESULT_SNIPPETS_PATH = file.path(Sys.getenv("OUTPUT_PATH"), "result_snippets")
+if (!dir.exists(RESULT_SNIPPETS_PATH)) {
+  dir.create(RESULT_SNIPPETS_PATH, recursive = TRUE)
+}
