@@ -122,47 +122,41 @@ comp_largest_super_cohort_sizes_across_clusterings <- function(panels_with_clust
     })
 }
 
-comp_block_missingness_identification_across_clusterings <- function(panels_with_clustered_outcomes, rank) {
-    panels_with_clustered_outcomes |>
-        group_by(k) |>
-        group_modify(\(panel_with_k_clustered_outcomes, keys) {
-            curr_k <- keys$k[1]
-            num_units <- length(unique(panel_with_k_clustered_outcomes$worker))
+comp_block_missingness_identification <- function(panel, rank, k_value, outcomes_per_outcome_cluster_df, firms_per_firm_cluster) {
+    num_units <- length(unique(panel$worker))
 
-            print(paste("# clusters:", curr_k, "; num units:", num_units))
+    clustered_panel_cohorts <- construct_cohorts_from_panel(
+        panel,
+        "worker", "outcome", "avg_weekly_earnings",
+        model_rank = rank,
+        min_cohort_size = MIN_COHORT_SIZE,
+        subset_to_largest_super_cohort = FALSE
+    )
 
-            clustered_panel_cohorts <- construct_cohorts_from_panel(
-                panel_with_k_clustered_outcomes,
-                "worker", "outcome", "avg_weekly_earnings",
-                model_rank = rank,
-                min_cohort_size = MIN_COHORT_SIZE,
-                subset_to_largest_super_cohort = FALSE
-            )
+    cohort_sizes <- clustered_panel_cohorts$cohort_sizes
 
-            cohort_sizes <- clustered_panel_cohorts$cohort_sizes
+    outcomes_per_outcome_cluster <- get_outcome_weights_for_k(
+        outcomes_per_outcome_cluster_df, k_value, clustered_panel_cohorts$outcome_ids)
 
-            outcomes_per_outcome_cluster <- get_outcome_weights_for_k(
-                outcomes_per_outcome_cluster_df, curr_k, clustered_panel_cohorts$outcome_ids)
+    num_outcomes <- length(clustered_panel_cohorts$outcome_ids)
+    total_outcome_weight <- sum(outcomes_per_outcome_cluster)
 
-            num_outcomes <- length(clustered_panel_cohorts$outcome_ids)
-            total_outcome_weight <- sum(outcomes_per_outcome_cluster)
+    outcomes_with_rank_overlap <- count_outcomes_with_rank_overlap_per_cohort(
+        clustered_panel_cohorts$observed_outcome_indices, rank)
+    total_outcome_weight_with_rank_overlap <- count_outcomes_with_rank_overlap_per_cohort(
+        clustered_panel_cohorts$observed_outcome_indices, rank,
+        outcome_weights = outcomes_per_outcome_cluster)
 
-            outcomes_with_rank_overlap <- count_outcomes_with_rank_overlap_per_cohort(
-                clustered_panel_cohorts$observed_outcome_indices, rank)
-            total_outcome_weight_with_rank_overlap <- count_outcomes_with_rank_overlap_per_cohort(
-                clustered_panel_cohorts$observed_outcome_indices, rank,
-                outcome_weights = outcomes_per_outcome_cluster)
-
-            data.frame(
-                num_units = num_units,
-                num_cohorts = length(cohort_sizes),
-                num_outcomes = num_outcomes,
-                num_firms = total_outcome_weight,
-                cohort_size = cohort_sizes,
-                outcomes_with_rank_overlap = outcomes_with_rank_overlap,
-                total_outcome_weight_with_rank_overlap = total_outcome_weight_with_rank_overlap
-            )
-        })
+    data.frame(
+        rank = rank,
+        num_units = num_units,
+        num_cohorts = length(cohort_sizes),
+        num_outcomes = num_outcomes,
+        num_firms = total_outcome_weight,
+        cohort_size = cohort_sizes,
+        outcomes_with_rank_overlap = outcomes_with_rank_overlap,
+        total_outcome_weight_with_rank_overlap = total_outcome_weight_with_rank_overlap
+    )
 }
 
 create_largest_super_cohort_plot <- function(super_df,
@@ -217,18 +211,17 @@ create_largest_super_cohort_plot <- function(super_df,
 create_block_missingness_ecdf_plot <- function(df, x_expr, x_label) {
     x_expr <- rlang::enquo(x_expr)
 
-    ggplot(df, aes(x = !!x_expr, color = as.factor(k))) +
+    ggplot(df, aes(x = !!x_expr, linetype = as.factor(rank))) +
         theme_bw() +
         stat_ecdf(aes(weight = cohort_size)) +
-        scale_color_viridis_d(end = 0.9) +
         scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
         scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+        scale_linetype_manual(values = c("dashed", "solid")) +
         labs(
             x = x_label,
             y = "Share of Workers",
-            color = "Number of Clusters\nper Province"
-        ) +
-        guides(color = guide_legend(ncol = 3))
+            linetype = "Rank"
+        )
 }
 
 largest_connected_component_sizes_across_clusterings <- comp_largest_super_cohort_sizes_across_clusterings(panels_with_clustered_outcomes, 1) |>
@@ -293,30 +286,36 @@ for (rank in 2:MAX_RANK) {
             y = "# of O³ Iterations until Convergence",
         ))
     ggsave(file.path(FIGURES_PATH, str_glue("num_o3_iterations_needed_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), num_o3_iterations_needed_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
-
-    # Plot of distribution of share of cohort outcome means identified by block missingness across cohorts
-
-    block_missingness_identification_across_clusterings <- comp_block_missingness_identification_across_clusterings(
-        panels_with_clustered_outcomes,
-        rank
-    )
-
-    block_missingness_id_plot <- create_block_missingness_ecdf_plot(
-        df = block_missingness_identification_across_clusterings,
-        x_expr = outcomes_with_rank_overlap / num_outcomes,
-        x_label = "Share of Cohort's Outcome Means Identified by Block Missingness"
-    )
-
-    ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), block_missingness_id_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
-
-    firm_weighted_block_missingness_id_plot <- create_block_missingness_ecdf_plot(
-        df = block_missingness_identification_across_clusterings,
-        x_expr = total_outcome_weight_with_rank_overlap / num_firms,
-        x_label = "Share of Cohort's Avg. Wages Across Firms Identified by Block Missingness"
-    )
-
-    ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_firm_weighted_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_rank={rank}.pdf")), firm_weighted_block_missingness_id_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
 }
+
+# ============================================================================
+# Block missingness ECDF plots for k = CHOSEN_K with rank 1 and rank 2
+# ============================================================================
+
+block_missingness_rank_1 <- comp_block_missingness_identification(
+    panel_for_chosen_k, 1, CHOSEN_K, outcomes_per_outcome_cluster_df, firms_per_firm_cluster
+)
+block_missingness_rank_2 <- comp_block_missingness_identification(
+    panel_for_chosen_k, 2, CHOSEN_K, outcomes_per_outcome_cluster_df, firms_per_firm_cluster
+)
+
+block_missingness_df <- bind_rows(block_missingness_rank_1, block_missingness_rank_2)
+
+block_missingness_id_plot <- create_block_missingness_ecdf_plot(
+    df = block_missingness_df,
+    x_expr = outcomes_with_rank_overlap / num_outcomes,
+    x_label = "Share of Cohort's Outcome Means Identified by Block Missingness"
+)
+
+ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.pdf")), block_missingness_id_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
+
+firm_weighted_block_missingness_id_plot <- create_block_missingness_ecdf_plot(
+    df = block_missingness_df,
+    x_expr = total_outcome_weight_with_rank_overlap / num_firms,
+    x_label = "Share of Cohort's Avg. Wages Across Firms Identified by Block Missingness"
+)
+
+ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_firm_weighted_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.pdf")), firm_weighted_block_missingness_id_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
 
 # ============================================================================
 # Generate summary statistics table comparing panel subsets
