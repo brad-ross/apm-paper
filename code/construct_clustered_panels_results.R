@@ -21,50 +21,35 @@ firm_clusters <- load_firm_clusters()
 panels_with_clustered_outcomes <- load_clustered_panels()
 
 # ============================================================================
-# Code to plot distributions of cohort sizes and number of cohorts across clusterings
+# Code to plot distribution of cohort sizes for k = CHOSEN_K
 # ============================================================================
 
-cohorts_by_k <- panels_with_clustered_outcomes |>
-    group_by(k) |>
-    group_modify(\(panel_with_k_clustered_outcomes, keys) {
-        k <- keys$k[1]
-        print(paste("# clusters:", k))
+panel_for_chosen_k <- panels_with_clustered_outcomes |>
+    filter(k == CHOSEN_K)
 
-        clustered_panel_cohorts <- construct_cohorts_from_panel(
-            panel_with_k_clustered_outcomes,
-            "worker", "outcome", "avg_weekly_earnings",
-            model_rank = 1,
-            min_cohort_size = MIN_COHORT_SIZE,
-            subset_to_largest_super_cohort = FALSE
-        )
+clustered_panel_cohorts_for_plot <- construct_cohorts_from_panel(
+    panel_for_chosen_k,
+    "worker", "outcome", "avg_weekly_earnings",
+    model_rank = 1,
+    min_cohort_size = MIN_COHORT_SIZE,
+    subset_to_largest_super_cohort = FALSE
+)
 
-        cohort_sizes <- clustered_panel_cohorts$cohort_sizes
+cohort_sizes_df <- data.frame(
+    cohort_size = clustered_panel_cohorts_for_plot$cohort_sizes
+)
 
-        data.frame(
-            cohort_size = cohort_sizes
-        )
-    })
-
-cohort_counts_by_k <- cohorts_by_k |>
-    ungroup() |>
-    count(k, name = "num_cohorts")
-
-cohort_counts_named <- setNames(cohort_counts_by_k$num_cohorts, as.character(cohort_counts_by_k$k))
-
-cohort_size_dist_and_num_cohorts_by_k_plot <- (ggplot(cohorts_by_k |> mutate(k = as.factor(k)))
+cohort_size_dist_plot <- (ggplot(cohort_sizes_df)
     + theme_bw()
-    + geom_freqpoly(aes(x = cohort_size, color = k), size = 1.2, bins = 30) 
-    + scale_color_viridis_d(end = 0.9, labels = function(x) paste0(x, " (", cohort_counts_named[as.character(x)], ")"))
+    + geom_freqpoly(aes(x = cohort_size), size = 1.2, bins = 30)
     + scale_x_log10(labels = scales::trans_format("log10", scales::math_format(10^.x)), limits = c(MIN_COHORT_SIZE, NA))
     + labs(
         x = "# Workers in Cohort",
-        y = "# Cohorts",
-        color = "# Clusters per Province\n(Total # Cohorts)",
+        y = "# Cohorts"
     )
-    + guides(color = guide_legend(ncol = 3))
 )
 
-ggsave(file.path(FIGURES_PATH, str_glue("cohort_size_dist_and_num_cohorts_by_k_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}.pdf")), cohort_size_dist_and_num_cohorts_by_k_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
+ggsave(file.path(FIGURES_PATH, str_glue("cohort_size_dist_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.pdf")), cohort_size_dist_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
 
 # ============================================================================
 # Code to plot the largest super cohort size across clusterings for a given rank
