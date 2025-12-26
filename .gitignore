@@ -2,3 +2,6 @@ data/**
 output/**
 **/*.pdf
 **/.DS_Store
+
+code/init_server.sh
+code/*.slurm
