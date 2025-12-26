@@ -1,1 +1,1 @@
-This repository contains the code to implement the methods and simulations described in ["Estimating Counterfactual Matrix Means with Short Panel Data"](https://arxiv.org/abs/2312.07520) by Lihua Lei and Brad Ross
+This repository contains the code to implement the empirical application described in ["Estimating Counterfactual Matrix Means with Short Panel Data"](https://arxiv.org/abs/2312.07520) by Lihua Lei and Brad Ross
