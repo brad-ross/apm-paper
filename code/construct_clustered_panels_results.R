@@ -51,6 +51,115 @@ cohort_size_dist_plot <- (ggplot(cohort_sizes_df)
 
 ggsave(file.path(FIGURES_PATH, str_glue("cohort_size_dist_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.pdf")), cohort_size_dist_plot, width = PAPER_FIG_WIDTH, height = PAPER_FIG_HEIGHT)
 
+
+# ============================================================================
+# Code to plot panel structure visualization (worker-outcome tile plot)
+# ============================================================================
+
+# Prepare panel data with cohort assignments
+panel_for_plot <- panel_for_chosen_k |>
+    mutate(
+        worker = as.factor(worker),
+        outcome = as.factor(outcome)
+    ) |>
+    arrange(worker, outcome) |>
+    group_by(worker) |>
+    mutate(
+        cohort = str_c(outcome, collapse = "; ")
+    ) |>
+    ungroup()
+
+# Compute cohort sizes and assign unit IDs
+unit_cohorts_for_plot <- panel_for_plot |>
+    select(cohort, worker) |>
+    distinct()
+
+cohort_sizes_for_plot <- unit_cohorts_for_plot |>
+    group_by(cohort) |>
+    summarize(cohort_size = n(), .groups = "drop") |>
+    arrange(desc(cohort_size)) |>
+    mutate(cohort_id = row_number())
+
+unit_ids_for_plot <- unit_cohorts_for_plot |>
+    inner_join(cohort_sizes_for_plot, by = "cohort") |>
+    arrange(cohort_size) |>
+    mutate(unit_id = row_number())
+
+# Create rectangles for each cohort-outcome pair
+cohort_rectangles_for_plot <- panel_for_plot |>
+    select(cohort, outcome) |>
+    unique() |>
+    left_join(
+        unit_ids_for_plot |>
+            group_by(cohort, cohort_id) |>
+            summarize(
+                unit_id_min = min(unit_id),
+                unit_id_max = max(unit_id),
+                .groups = "drop"
+            ),
+        by = "cohort"
+    )
+
+# Create ordered outcome levels with spacers between provinces
+outcome_levels <- cohort_rectangles_for_plot |>
+    pull(outcome) |>
+    unique() |>
+    as.character() |>
+    sort()
+
+# Parse outcomes to identify province boundaries
+outcome_provinces <- sapply(strsplit(outcome_levels, ":"), `[[`, 2)
+
+# Insert spacer levels where province changes
+outcome_levels_with_spacers <- character(0)
+for (i in seq_along(outcome_levels)) {
+    if (i > 1 && outcome_provinces[i] != outcome_provinces[i - 1]) {
+        # Add a spacer before this outcome (province boundary)
+        spacer_name <- paste0("__spacer_", i, "__")
+        outcome_levels_with_spacers <- c(outcome_levels_with_spacers, spacer_name)
+    }
+    outcome_levels_with_spacers <- c(outcome_levels_with_spacers, outcome_levels[i])
+}
+
+# Update the outcome factor in the data to include spacer levels
+cohort_rectangles_for_plot <- cohort_rectangles_for_plot |>
+    mutate(outcome = factor(as.character(outcome), levels = outcome_levels_with_spacers))
+
+# Create the panel structure plot
+panel_structure_plot <- (
+    ggplot(cohort_rectangles_for_plot)
+    + theme_test()
+    + theme(panel.background = element_rect(fill = "#f5e7e7"),
+            panel.border = element_blank(),
+            axis.text.x = element_text(size = 6))
+    + geom_tile(aes(y = (unit_id_min + unit_id_max) / 2, 
+                    height = unit_id_max - unit_id_min, 
+                    x = outcome), 
+                fill = "#7a0a0a")
+    + scale_x_discrete(
+        expand = c(0, 0), 
+        drop = FALSE, 
+        breaks = outcome_levels,  # Only show ticks for real outcomes, not spacers
+        labels = function(x) {
+            # Outcome format is "year:province:cluster"
+            split_x <- str_split_fixed(x, ":", 3)
+            year_cluster <- split_x[, 1]
+            year_cluster_label <- str_glue("{year_cluster} - {as.numeric(year_cluster) + YEAR_CLUSTER_SIZE - 1}")
+            province <- split_x[, 2]
+            cluster <- split_x[, 3]
+            if_else(cluster == "2",
+                if_else(province == "TV",
+                    str_glue("{cluster}\n[ {province} ]\n |------------- {year_cluster_label} -------------|"),
+                    str_glue("{cluster}\n[ {province} ]")),
+                str_glue("{cluster}"))
+        }
+    )
+    + scale_y_continuous(expand = c(0, 0), labels = scales::scientific)
+    + labs(x = "(Firm Group, Province, Year Range)", y = "Worker")
+)
+
+ggsave(file.path(FIGURES_PATH, str_glue("match_outcome_panel_structure_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.pdf")), panel_structure_plot, width = 4.5, height = 3.25)
+
 # ============================================================================
 # Code to plot the largest super cohort size across clusterings for a given rank
 # ============================================================================

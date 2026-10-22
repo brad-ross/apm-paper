@@ -224,7 +224,7 @@ if (length(share_rows) > 0) {
     }
 }
 
-colnames(kbl_data) <- c("Statistic", str_glue("$r = {spec_meta$r}$"))
+colnames(kbl_data) <- c("Stat.", str_glue("$r = {spec_meta$r}$"))
 
 fes_header_rle <- rle(spec_meta$include_outcome_fes)
 header_fes <- c(
