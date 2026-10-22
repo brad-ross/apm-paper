@@ -28,9 +28,9 @@ formatted_target_params <- target_param_table_data |>
         .groups = "drop"
     ) |>
     mutate(
-        `Point Est.` = formatC(estimate, format = "f", digits = 3),
-        `Std. Err.` = formatC(std_error, format = "f", digits = 3),
-        `$p$-value` = formatC(p_value, format = "f", digits = 3),
+        `Point Est.` = formatC(estimate, format = "f", digits = 2),
+        `Std. Err.` = formatC(std_error, format = "f", digits = 2),
+        `$p$-value` = formatC(p_value, format = "f", digits = 2),
         !!ci_sym := str_glue("\\makecell{{[{formatC(ci_lb, format = 'f', digits = 3)}, \\\\ \\;{formatC(ci_ub, format = 'f', digits = 3)}]}}")
     )
 
@@ -60,7 +60,7 @@ for (spec_name in spec_order) {
 
 kbl_data <- target_param_table |>
     mutate(
-        Statistic = if_else(Statistic == "Point Est.", "Province Share", Statistic)
+        Statistic = if_else(Statistic == "Point Est.", "\\makecell{Province \\\\ Share}", Statistic)
     ) |>
     select(Statistic, all_of(spec_order))
 
@@ -68,7 +68,7 @@ target_param_table_kable <- kbl_data |>
     kbl(
         format = "latex",
         booktabs = TRUE,
-        col.names = c("Statistic", spec_order),
+        col.names = c("Stat.", spec_order),
         align = c("l", rep("c", length(spec_order))),
         escape = FALSE
     )
