@@ -29,7 +29,7 @@ build_archive <- function() {
   files <- trimws(readLines(manifest_path, warn = FALSE))
   files <- files[nzchar(files) & !startsWith(files, '#')]
   if (!length(files) || anyDuplicated(files)) stop('Allowlist must contain unique explicit file paths')
-  required <- c('README.md', 'README.pdf', 'Makefile', 'setup.R', 'run.R',
+  required <- c('README.md', 'README.pdf', 'LICENSE', 'Makefile', 'setup.R', 'run.R',
                 'renv.lock', 'config/public.lock', 'config/paper.R',
                 'software/apm-source.json', 'software/README.md',
                 'vendor/apm_0.1.0.tar.gz', 'data/clean_data/driver_panel_grid.csv',

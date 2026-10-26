@@ -2,6 +2,7 @@
 # Authors must review this exact list before release.
 README.md
 README.pdf
+LICENSE
 Makefile
 setup.R
 run.R

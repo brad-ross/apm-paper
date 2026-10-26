@@ -75,7 +75,7 @@ Authors must reconcile final manuscript/appendix coverage: Figure 1a is identifi
 
 The [Econometric Society policy](https://www.econometricsociety.org/publications/es-data-editor-website/data-and-code-availability-policy) and [checklist](https://www.econometricsociety.org/uploads/reports%20Editorial/ES_Data_Editor_Website/Checklist.pdf) govern exemptions, transformation programs, verification and deposit. Authors must resolve the restricted-data arrangement with the Editorial Office/Data Editor before claiming submission readiness. The [Kline–Saggio–Sølvsten archive](https://eml.berkeley.edu/~pkline/papers/KSS2020_COMP.zip) is a documentation precedent for separating access, construction and analysis; its exemption does not transfer to this paper. No synthetic substitute or hosted driver-data access has been approved here.
 
-The APM asset includes its MIT notices. A license grant for this replication repository's own code/documentation requires author confirmation; APM's license does not license restricted data. The author approved the Figure 1a numerical plotting input only. Dataset citations, other disclosure permissions, final software release metadata, final manuscript mapping and journal arrangements remain author release decisions.
+The replication scripts are licensed under MIT; see `LICENSE`. This grant excludes data, numerical plotting inputs, documentation and third-party software. The APM asset retains its own MIT notices. The author approved the Figure 1a numerical plotting input only. Dataset citations, other disclosure permissions, final software release metadata, final manuscript mapping and journal arrangements remain author release decisions.
 
 ## Local archive
 
