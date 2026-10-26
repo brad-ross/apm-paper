@@ -31,8 +31,5 @@ validate_driver_panel_grid <- function(grid) {
       any(grid$ymin != c(0.5, head(grid$ymax, -1)))) {
     invalid("anonymous display rows must be contiguous and start at row 1")
   }
-  if (anyDuplicated(grid[c("xmin", "xmax")])) {
-    invalid("duplicate cohort week intervals")
-  }
   invisible(grid)
 }

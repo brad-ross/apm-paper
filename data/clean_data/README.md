@@ -25,8 +25,8 @@ The CSV has exactly four numerical columns and one row per retained cohort:
 Each rectangle is the union of its historical driver/week tiles. Week centers
 are integer week IDs. Tile width follows historical `geom_tile()` defaults:
 the smallest spacing between retained week centers, or 1 for a single center.
-Any multiweek cohort makes this width 1. Thus `xmin = first_week - width/2` and
-`xmax = treatment_week + width/2`, including singleton-week cohorts. Driver row
+Any multiweek cohort makes this width 1. Thus `xmin = min(first_week, treatment_week) - width/2` and
+`xmax = max(first_week, treatment_week) + width/2`, including singleton-week cohorts. Driver row
 centers are the integers starting at 1; their tiles have height 1. Consequently
 `ymin = first_display_row - 0.5`, `ymax = last_display_row + 0.5`, and
 `ymax - ymin` is the number of drivers in the cohort (at least 100). Adjacent
@@ -60,3 +60,8 @@ individual driver/week records. The figure retains the historical colors,
 Public rendering verifies the figure from supplied plotting inputs. Verification
 of the upstream construction requires authorized access to private driver data;
 the public grid does not supply that access.
+
+Blank week fields are treated as missing, matching the historical CSV reader.
+Intervals include both endpoints even when the first week exceeds the treatment
+week, matching historical `seq(first_week, treatment_week)` behavior. Distinct
+cohorts can therefore have the same horizontal bounds on different display rows.

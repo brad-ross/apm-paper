@@ -10,7 +10,7 @@ if (!file.exists(input_path)) {
 }
 required_columns <- c("rider_id", "first_week_in_panel_dateweek_id", "began_active_week_id")
 # Read identifiers as strings, and never write or print them.
-drivers <- read.csv(input_path, colClasses = "character", check.names = FALSE)
+drivers <- read.csv(input_path, colClasses = "character", check.names = FALSE, na.strings = c("", "NA"))
 if (!all(required_columns %in% names(drivers))) {
   stop("Private riders.csv is missing required Figure 1a columns.", call. = FALSE)
 }
@@ -23,9 +23,8 @@ if (any(!nzchar(trimws(drivers$rider_id)))) {
 first_week <- suppressWarnings(as.numeric(drivers$first_week_in_panel_dateweek_id))
 treatment_week <- suppressWarnings(as.numeric(drivers$began_active_week_id))
 if (any(!is.finite(first_week) | !is.finite(treatment_week)) ||
-    any(first_week != round(first_week) | treatment_week != round(treatment_week)) ||
-    any(first_week > treatment_week)) {
-  stop("Driver weeks must be finite integers with entry no later than treatment.",
+    any(first_week != round(first_week) | treatment_week != round(treatment_week))) {
+  stop("Driver weeks must be finite integers.",
        call. = FALSE)
 }
 drivers <- unique(data.frame(rider_id = drivers$rider_id,
@@ -47,13 +46,14 @@ cohorts <- cohorts[cohorts$cohort_size >= 100, , drop = FALSE]
 cohorts <- cohorts[order(cohorts$cohort), , drop = FALSE]
 if (!nrow(cohorts)) stop("No driver cohort meets the minimum size of 100.", call. = FALSE)
 # geom_tile's default width is the smallest spacing of observed week centers.
+# Historical seq(first_week, treatment_week) includes reversed intervals too.
 # Inclusive multiweek intervals guarantee spacing 1; singleton-only panels may not.
 week_centers <- sort(unique(cohorts$first_week))
-tile_width <- if (any(cohorts$treatment_week > cohorts$first_week) ||
+tile_width <- if (any(cohorts$treatment_week != cohorts$first_week) ||
                   length(week_centers) < 2) 1 else min(diff(week_centers))
 last_row <- cumsum(cohorts$cohort_size)
-grid <- data.frame(xmin = cohorts$first_week - tile_width / 2,
-                   xmax = cohorts$treatment_week + tile_width / 2,
+grid <- data.frame(xmin = pmin(cohorts$first_week, cohorts$treatment_week) - tile_width / 2,
+                   xmax = pmax(cohorts$first_week, cohorts$treatment_week) + tile_width / 2,
                    ymin = c(0, head(last_row, -1)) + 0.5,
                    ymax = last_row + 0.5)
 validate_driver_panel_grid(grid)
