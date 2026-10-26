@@ -1,10 +1,10 @@
 # Reference-output baseline and coverage inventory
 
-Inspection date: 2026-10-26. Scope: tracked source code, historical driver plotting source, configuration, and local output filenames. No restricted file content, credentials, empirical values, PDFs, table contents, or snippet contents were opened. No VWH conversion, clustering, estimation, reporting, or Slurm job was run. Figure 1a implementation and run verification are recorded separately under U3 / `verification.md`.
+Inspection date: 2026-10-26. Scope: tracked source code, historical driver plotting source, configuration, and local output filenames. No restricted file content, credentials, empirical values, PDFs, table contents, or snippet contents were opened. No VWH conversion, clustering, estimation, reporting, or Slurm job was run. Figure 1a implementation and run verification are recorded separately in `verification.md`.
 
 ## Source identities and scientific settings
 
-The inspected replication revision is `9c8cac6dbd7aad675fff62edc005359915c1775a`; the sibling APM revision is `264907b0a2db57bf4c49285313b6eea4681f2b95`. The plan records APM DESCRIPTION version `0.1.0` and the merged seed/install fixes. These identify inspected source, not the build that generated historical outputs. APM's tested standalone release identity and checksum are separate U2 work. Historical output-generating replication/APM revisions, build options, platform, BLAS/toolchain, seeds, threads, data fingerprints, timestamps of successful runs, and numerical agreement remain unconfirmed.
+The inspected replication revision is `9c8cac6dbd7aad675fff62edc005359915c1775a`; the sibling APM revision is `264907b0a2db57bf4c49285313b6eea4681f2b95`. APM DESCRIPTION records version `0.1.0` and the merged seed/install fixes. These identify inspected source, not the build that generated historical outputs. The bundled APM source identity, checksum and installation evidence are recorded in `software/apm-source.json`. Historical output-generating replication/APM revisions, build options, platform, BLAS/toolchain, seeds, threads, data fingerprints, timestamps of successful runs, and numerical agreement remain unconfirmed.
 
 At the inspected replication revision, `code/init_server.sh` specifies first/last year 1998/2001, maximum rank 2, minimum cohort size 75, k from 1 to 25, and chosen k=3. `code/env_config.R` derives year-bin width `ceiling((LAST_YEAR-FIRST_YEAR)/MAX_RANK)=2`. The shared `APM_SEED` defaults to 9001, supports an explicit environment override, and is passed to firm clustering and the 1,000-draw Bayesian bootstrap. This default must not be assigned retrospectively to old output. Clustering uses 100 as its third positional argument and `n_inits=10`; preserve the source call rather than guessing its historical interpretation. Thread count is configured; deterministic clustering fixes remove the former single-thread requirement, but no empirical thread-equivalence comparison was performed here.
 
@@ -21,7 +21,7 @@ The map contains:
 - 61 in-text snippet files: 10 panel/configuration snippets, 36 evaluation snippets (4 specifications × 3 error statistics × 3 summary metrics), and 15 decomposition snippets (1 parameter × 3 specifications × 5 statistics). Rows expand every baseline combination; filename-pattern columns document the dynamic families. Fixed snippet/table filenames can be overwritten by another study configuration.
 - 3 unmapped historical figure filenames and 3 explicit gaps covering final manuscript reconciliation, external simulations, and other computational illustrations/appendices.
 
-The initial filename-only inspection found 75 files beneath `output/result_summaries`: 11 figures, 3 tables, 61 snippets. All 75 have rows. Figure 1a was absent at that inventory point and is included as the recovered target; later U3 generation is not a historical baseline. Presence means only a filename was seen. Historical files remain private and unchanged; none is certified as the authoritative manuscript reference or approved for redistribution.
+The initial filename-only inspection found 75 files beneath `output/result_summaries`: 11 figures, 3 tables, 61 snippets. All 75 have rows. Figure 1a was absent at that inventory point and is included as the recovered target; subsequent generation is not a historical baseline. Presence means only a filename was seen. Historical files remain private and unchanged; none is certified as the authoritative manuscript reference or approved for redistribution.
 
 The three extra historical filenames have no generating write site in the current tracked code:
 
@@ -36,7 +36,7 @@ The first two coexist with current `_k=3.pdf` names. No equivalence or replaceme
 - All 12 tracked R files under `code/`, including every `ggsave`, `writeLines`, `write_result_snippet`, and Parquet write site, plus `code/init_server.sh` and `README.md`.
 - Historical `eed1a22:code_old/visualize_panels.R:279-320` for the driver section; the deletion/recovery provenance and author decisions in the unchanged plan.
 - Filename-only listing of `output/result_summaries/` and directory-only identification of historical simulation-output locations. No source data were opened.
-- The Goal Capsule, product requirements, rights/coverage decisions, and U1 in `docs/plans/2026-10-22-1511-feat-journal-replication-package-plan.md`.
+- The author-approved implementation scope, output paths and rights/coverage decisions.
 - Current FRDB access page on 2026-10-26; see [data-sources.md](data-sources.md) for source links and provenance limits.
 
 No Overleaf source was requested or accessed. Except Figure 1a, exact manuscript numbers and panel/in-text references remain unconfirmed. The source inventory is complete for the inspected write sites; manuscript-wide coverage remains open.

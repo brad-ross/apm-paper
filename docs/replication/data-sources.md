@@ -1,6 +1,6 @@
 # Data sources, access, and distribution status
 
-Inventory date: 2026-10-26. This document separates obtaining source files, constructing analysis data, and running analysis, following the structure of the Kline–Saggio–Sølvsten (KSS) replication documentation cited in the plan. KSS's exemption does not apply to this paper. No exemption is currently approved for this package. Actual access agreements, access dates, source versions, costs, delays, and journal verification arrangements require author/provider confirmation.
+Inventory date: 2026-10-26. This document separates obtaining source files, constructing analysis data, and running analysis, following the structure of the Kline–Saggio–Sølvsten (KSS) replication documentation linked below. KSS's exemption does not apply to this paper. No exemption is currently approved for this package. Actual access agreements, access dates, source versions, costs, delays, and journal verification arrangements require author/provider confirmation.
 
 ## VWH: obtain source files
 
@@ -39,9 +39,9 @@ No VWH stage was run for this inventory. Existing output filenames are evidence 
 
 Private source: `DATA_PATH/raw_data/riders.csv`. Original source/provider, collection period, acquisition date/version, citation, license, and access/contact arrangements are **unconfirmed**; no hosted access route is promised. The author permits release of the numerical plotting inputs for Figure 1a, not the driver records. Raw-to-grid transformation code must accompany the package; approved plotting inputs do not by themselves resolve the journal's raw-data requirements.
 
-Historical source is `eed1a22:code_old/visualize_panels.R:279-320`, deleted in `de93961`. It reads `rider_id`, `first_week_in_panel_dateweek_id`, and `began_active_week_id`; removes missing values; expands inclusive entry-to-treatment weeks; retains cohorts with at least 100 drivers; and orders anonymous display rows by the historical cohort labels. The historical script drops `week_id` before plotting; U3 repairs this while preserving the intended geometry.
+Historical source is `eed1a22:code_old/visualize_panels.R:279-320`, deleted in `de93961`. It reads `rider_id`, `first_week_in_panel_dateweek_id`, and `began_active_week_id`; removes missing values; expands inclusive entry-to-treatment weeks; retains cohorts with at least 100 drivers; and orders anonymous display rows by the historical cohort labels. The historical script drops `week_id` before plotting; the recovered code repairs this while preserving the intended geometry.
 
-U3 supplies `code/construct_driver_panel_grid.R` for explicit private preparation and `code/driver_panel_results.R` for rendering. The supplied `DATA_PATH/clean_data/driver_panel_grid.csv` contains rectangle geometry, with its codebook in `data/clean_data/README.md`. Public reproduction starts at that file and writes `OUTPUT_PATH/result_summaries/figures/panel_plot_drivers_times.pdf`; it must not open private input or automatically regenerate a missing grid. Private preparation and public plotting are separate claims: successful plotting does not verify the construction of the supplied grid. See the scoped run evidence in `verification.md` when available.
+The package supplies `code/construct_driver_panel_grid.R` for explicit private preparation and `code/driver_panel_results.R` for rendering. The supplied `DATA_PATH/clean_data/driver_panel_grid.csv` contains rectangle geometry, with its codebook in `data/clean_data/README.md`. Public reproduction starts at that file and writes `OUTPUT_PATH/result_summaries/figures/panel_plot_drivers_times.pdf`; it must not open private input or automatically regenerate a missing grid. Private preparation and public plotting are separate claims: successful plotting does not verify the construction of the supplied grid. See the scoped run evidence in `verification.md`.
 
 ## Editorial and coverage decisions still required
 
