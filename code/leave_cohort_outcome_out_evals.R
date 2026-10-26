@@ -46,6 +46,8 @@ if (file.exists(masked_metrics_path)) {
     masked_metrics <- read_parquet(masked_metrics_path)
 }
 
+expected_evaluations <- data.frame(cohort = integer(), outcome = integer(), spec = character())
+
 for (cohort_pos in seq_along(cohort_order)) {
     cohort_id <- cohort_order[[cohort_pos]]
     cohort_outcomes <- observed_outcome_indices[[cohort_id]]
@@ -71,7 +73,12 @@ for (cohort_pos in seq_along(cohort_order)) {
             pull(spec)
         non_existing_est_specs_for_cohort_outcome <- setdiff(names(est_specs), existing_est_specs_for_cohort_outcome)
 
-        if (!aligned_factors_identified(masked_ooi, MAX_RANK) || length(non_existing_est_specs_for_cohort_outcome) == 0) {
+        if (!aligned_factors_identified(masked_ooi, MAX_RANK)) {
+            next
+        }
+        expected_evaluations <- bind_rows(expected_evaluations,
+            data.frame(cohort = cohort_id, outcome = outcome_id, spec = names(est_specs)))
+        if (length(non_existing_est_specs_for_cohort_outcome) == 0) {
             next
         }
 
@@ -119,6 +126,12 @@ for (cohort_pos in seq_along(cohort_order)) {
         # Checkpoint after every (cohort, outcome) pair
         write_parquet(masked_metrics, masked_metrics_path)
     }
+}
+
+missing_evaluations <- anti_join(expected_evaluations, masked_metrics,
+                                 by = c("cohort", "outcome", "spec"))
+if (nrow(missing_evaluations)) {
+    stop(str_glue("Evaluation incomplete: {nrow(missing_evaluations)} eligible cohort/outcome/spec results are missing. Successful checkpoints were retained; rerun the same target to resume."))
 }
 
 print(str_glue("Leave-cohort-outcome-out evaluation results saved to {masked_metrics_path}"))

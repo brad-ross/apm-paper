@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=apm-decomp-reports
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --time=02:00:00
+set -euo pipefail
+root=${1:?Repository root required}
+shift
+cd "$root"
+source code/init_server.sh "${SLURM_CPUS_PER_TASK:?}"
+exec Rscript --vanilla run.R --mode stage "$@"

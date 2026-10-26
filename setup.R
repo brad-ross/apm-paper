@@ -1,5 +1,4 @@
 #!/usr/bin/env Rscript
-# Restore the selected pinned environment; never run a scientific stage here.
 args <- commandArgs(trailingOnly=TRUE)
 scope <- if ('--scope' %in% args) args[match('--scope',args)+1L] else 'vwh'
 if (is.na(scope) || !scope %in% c('public','vwh')) stop('Use --scope public or --scope vwh')
@@ -15,7 +14,6 @@ setup <- function() {
   on.exit(unlink(lock_dir,recursive=TRUE),add=TRUE)
   previous <- .libPaths()
   .libPaths(c(lib, previous))
-  # Bootstrap only renv. Its version is also pinned in both dependency locks.
   if (!dir.exists(file.path(lib,'renv'))) {
     existing <- find.package('renv',quiet=TRUE)
     if (length(existing) && as.character(packageVersion('renv')) == '1.3.1') {
@@ -44,7 +42,6 @@ setup <- function() {
   install_apm <- FALSE
   if(scope=='vwh') {
     if(!requireNamespace('jsonlite',quietly=TRUE)) {
-      # renv restores this pinned dependency before reading the APM manifest below.
       renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages='jsonlite',prompt=FALSE)
     }
     if(!file.exists('software/apm-source.json')) stop('Missing bundled APM source manifest')
@@ -57,10 +54,8 @@ setup <- function() {
       install_apm <- !identical(installed$asset_sha256,source_meta$source_sha256)
     }
   }
-  # Do not replace a library while a runner holds a use lock.
   users <- list.files(paste0(lib,'.users'),all.files=FALSE,full.names=TRUE)
   if((length(needed)||install_apm) && length(users)) stop('Project library is used by active jobs. Use a separate REPLICATION_LIBRARY or wait for them to finish.')
-  # Reuse exact installed versions on this machine before downloading anything.
   for(name in needed) {
     for(base in previous) {
       src <- file.path(base,name)
