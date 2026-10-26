@@ -92,7 +92,7 @@ get_default_est_specs <- function(include_extended = FALSE) {
 }
 
 # Get default bootstrap draws
-get_default_bootstrap <- function(panel, n_draws = 1000, seed = 9001L) {
+get_default_bootstrap <- function(panel, n_draws = 1000, seed = APM_SEED) {
     get_weighted_bootstrap_draws(panel$get_num_units(), n_draws, type = "bayesian", seed = seed)
 }
 

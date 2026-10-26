@@ -3,6 +3,15 @@
 # This file centralizes environment variable parsing used across multiple scripts.
 # Source this file to get access to common configuration variables.
 
+# Shared random seed for clustering and bootstrap draws
+APM_SEED <- suppressWarnings(as.numeric(Sys.getenv("APM_SEED", unset = "9001")))
+if (is.na(APM_SEED) || !is.finite(APM_SEED) ||
+    APM_SEED < 0 || APM_SEED > .Machine$integer.max ||
+    APM_SEED != floor(APM_SEED)) {
+    stop("APM_SEED must be a nonnegative integer no greater than ", .Machine$integer.max)
+}
+APM_SEED <- as.integer(APM_SEED)
+
 # Year range configuration
 FIRST_YEAR <- as.integer(Sys.getenv("FIRST_YEAR"))
 LAST_YEAR <- as.integer(Sys.getenv("LAST_YEAR"))

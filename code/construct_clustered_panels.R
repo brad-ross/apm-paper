@@ -25,7 +25,7 @@ for (prov in unique(avg_weekly_earn_by_firm_year$province)) {
     print(paste("Panel creation time for", prov, ":", data_construction_time["elapsed"], "seconds, with", length(prov_panel$get_outcome_ids()), "workers and", length(prov_panel$get_unit_ids()), "firms"))
 
     clustering_time <- system.time({
-        raw_firm_clusters_for_prov <- comp_outcome_clusterings(prov_panel, 100, MIN_K, MAX_K, n_inits = 10, num_threads = Sys.getenv("APM_MAX_THREADS"))
+        raw_firm_clusters_for_prov <- comp_outcome_clusterings(prov_panel, 100, MIN_K, MAX_K, n_inits = 10, num_threads = num_threads, seed = APM_SEED)
     })
     print(paste("Clustering time for", prov, ":", clustering_time["elapsed"], "seconds"))
     
