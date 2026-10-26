@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "package": "apm",
+  "version": "0.1.0",
+  "repository": "https://github.com/brad-ross/apm",
+  "upstream_commit": "264907b0a2db57bf4c49285313b6eea4681f2b95",
+  "release_tag": null,
+  "release_url": null,
+  "source_tarball": "vendor/apm_0.1.0.tar.gz",
+  "source_sha256": "968b30b485aab903b4bc231b387aab644f845fc2ba31a74ca5b4df0868e3d2e8",
+  "installed_provenance": "APM-SOURCE.json",
+  "packaging": {
+    "tool": "tools/build_source_package.R",
+    "tool_sha256": "ff022f55fa900058f2b01ac7b685f0f1551ffffedb72e17c101ae7484b03a04e",
+    "root_license_sha256": "643c4478e312d9b3c1088c6ea7d6d1dce1e9c941cc204ab3f65b6dab137b2fa8",
+    "r_license_sha256": "bb327f8b9652bfb3a0189d5b830602ada72571651922485a518e355047fc564d",
+    "tracked_scientific_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transformations": ["Stage r/ and core/src under src/core", "Rewrite core includes and Makevars paths", "Derive both platform OBJECTS from staged translation units", "Exclude tests and compiled artifacts", "Include MIT notices"],
+    "commit": "eb27a946f902036c3b433be433e303d5019cfc89"
+  },
+  "build": {
+    "r_version": "4.3.0",
+    "platform": "x86_64-pc-linux-gnu",
+    "command": "R CMD build --no-build-vignettes --no-manual <staged apm>",
+    "built_at_utc": "2026-10-26T22:46:01Z"
+  },
+  "verification": {
+    "isolated_install": "passed: standalone source asset installed into project library without sibling source references",
+    "package_load": "passed under R 4.3.0 on Linux x86_64",
+    "empirical_analysis": "not run",
+    "historical_numerical_equivalence": "not verified"
+  }
+}

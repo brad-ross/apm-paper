@@ -1,0 +1,91 @@
+#!/usr/bin/env Rscript
+# Restore the selected pinned environment; never run a scientific stage here.
+args <- commandArgs(trailingOnly=TRUE)
+scope <- if ('--scope' %in% args) args[match('--scope',args)+1L] else 'vwh'
+if (is.na(scope) || !scope %in% c('public','vwh')) stop('Use --scope public or --scope vwh')
+source('config/paper.R')
+lib <- Sys.getenv('REPLICATION_LIBRARY')
+dir.create(lib, recursive=TRUE, showWarnings=FALSE)
+lib <- normalizePath(lib, mustWork=TRUE)
+Sys.setenv(REPLICATION_LIBRARY=lib, RENV_PATHS_ROOT=file.path(getwd(),'.replication','renv'))
+lock_dir <- paste0(lib,'.setup-lock')
+if (!dir.create(lock_dir, showWarnings=FALSE)) stop('Another setup owns ',lock_dir,'. Retry after it finishes; remove only a confirmed stale lock.')
+# Top-level scripts have no on.exit scope; use a function for reliable cleanup.
+setup <- function() {
+  on.exit(unlink(lock_dir,recursive=TRUE),add=TRUE)
+  previous <- .libPaths()
+  .libPaths(c(lib, previous))
+  # Bootstrap only renv. Its version is also pinned in both dependency locks.
+  if (!dir.exists(file.path(lib,'renv'))) {
+    existing <- find.package('renv',quiet=TRUE)
+    if (length(existing) && as.character(packageVersion('renv')) == '1.3.1') {
+      if (!file.copy(existing,lib,recursive=TRUE)) stop('Cannot copy renv into project library')
+    } else {
+      url <- 'https://cran.r-project.org/src/contrib/Archive/renv/renv_1.3.1.tar.gz'
+      archive <- tempfile(fileext='.tar.gz')
+      # Current CRAN location first; the archive remains valid after a newer release.
+      ok <- tryCatch({download.file(sub('/Archive/renv','',url),archive,quiet=TRUE);TRUE},error=function(e) FALSE)
+      if (!ok) download.file(url,archive,quiet=TRUE)
+      install.packages(archive,lib=lib,repos=NULL,type='source')
+    }
+  }
+  if (!requireNamespace('renv',quietly=TRUE)) stop('renv bootstrap failed')
+  lockfile <- if(scope=='public') 'config/public.lock' else 'renv.lock'
+  lock <- renv::lockfile_read(lockfile)
+  current_r <- paste(R.version$major,R.version$minor,sep='.')
+  if (current_r != lock$R$Version) stop('Use R ',lock$R$Version,' to match this replication environment (found ',current_r,').')
+  matches <- function(name, record) {
+    path <- file.path(lib,name,'DESCRIPTION')
+    file.exists(path) && identical(unname(read.dcf(path,fields='Version')[1,1]),record$Version)
+  }
+  needed <- names(Filter(function(x) !matches(x$Package,x),lock$Packages))
+  source_meta <- NULL
+  asset <- NULL
+  install_apm <- FALSE
+  if(scope=='vwh') {
+    if(!requireNamespace('jsonlite',quietly=TRUE)) {
+      # renv restores this pinned dependency before reading the APM manifest below.
+      renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages='jsonlite',prompt=FALSE)
+    }
+    if(!file.exists('software/apm-source.json')) stop('Missing bundled APM source manifest')
+    source_meta <- jsonlite::read_json('software/apm-source.json',simplifyVector=TRUE)
+    asset <- source_meta$source_tarball
+    if(is.null(asset)) stop('APM manifest must contain source_tarball')
+    install_apm <- !file.exists(file.path(lib,'apm','replication-source.json'))
+    if(!install_apm) {
+      installed <- jsonlite::read_json(file.path(lib,'apm','replication-source.json'),simplifyVector=TRUE)
+      install_apm <- !identical(installed$asset_sha256,source_meta$source_sha256)
+    }
+  }
+  # Do not replace a library while a runner holds a use lock.
+  users <- list.files(paste0(lib,'.users'),all.files=FALSE,full.names=TRUE)
+  if((length(needed)||install_apm) && length(users)) stop('Project library is used by active jobs. Use a separate REPLICATION_LIBRARY or wait for them to finish.')
+  # Reuse exact installed versions on this machine before downloading anything.
+  for(name in needed) {
+    for(base in previous) {
+      src <- file.path(base,name)
+      desc <- file.path(src,'DESCRIPTION')
+      if(file.exists(desc) && identical(unname(read.dcf(desc,fields='Version')[1,1]),lock$Packages[[name]]$Version)) {
+        unlink(file.path(lib,name),recursive=TRUE)
+        if(!file.copy(src,lib,recursive=TRUE)) stop('Could not copy dependency ',name)
+        break
+      }
+    }
+  }
+  needed <- names(Filter(function(x) !matches(x$Package,x),lock$Packages))
+  if(length(needed)) renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages=needed,prompt=FALSE)
+  if(!all(vapply(names(lock$Packages),function(n) matches(n,lock$Packages[[n]]),logical(1)))) stop('Dependency restoration incomplete')
+  if(scope=='vwh') {
+    if(!file.exists(asset) || digest::digest(file=asset,algo='sha256') != source_meta$source_sha256) stop('Bundled APM source checksum mismatch')
+    if(install_apm) {
+      if(!nzchar(Sys.which('make'))) stop('Installing APM requires Make and a C++17 compiler; see README')
+      status <- system2(file.path(R.home('bin'),'R'), c('CMD','INSTALL',paste0('--library=',shQuote(lib)),shQuote(asset)))
+      if(status != 0L) stop('APM installation failed; previous installation was not certified')
+      if(!file.exists(file.path(lib,'apm','DESCRIPTION'))) stop('APM installation failed')
+      jsonlite::write_json(list(asset_sha256=source_meta$source_sha256,commit=source_meta$upstream_commit),file.path(lib,'apm','replication-source.json'),auto_unbox=TRUE,pretty=TRUE)
+    }
+    if(!requireNamespace('apm',quietly=TRUE,lib.loc=lib)) stop('Installed APM does not load')
+  }
+  cat('Setup ready:',scope,'environment in',lib,'\n')
+}
+setup()
