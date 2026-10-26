@@ -1,7 +1,12 @@
+# Keep data-folder documentation, never data files (including the public grid).
 data/**
+!data/**/
+!data/**/README.md
 output/**
 **/*.pdf
+!README.pdf
 **/.DS_Store
-
-code/init_server.sh
-code/*.slurm
+.replication/
+renv/library/
+renv/staging/
+dist/

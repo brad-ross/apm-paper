@@ -1,17 +1,9 @@
-#!/bin/bash
-
-ml R/4.3.0
-
-export DATA_PATH=~/projects/apm/replication/data
-export OUTPUT_PATH=~/projects/apm/replication/output
-
-export APM_MAX_THREADS=${1:-40}
+#!/usr/bin/env bash
+# Cluster-only environment. Pass threads explicitly from the Slurm allocation.
+if ! command -v module >/dev/null 2>&1; then
+  source /etc/profile.d/z00_lmod.sh
+fi
+module load "${REPLICATION_R_MODULE:-R/4.3.0}"
+export APM_MAX_THREADS="${1:-40}"
 export APM_SEED="${APM_SEED:-9001}"
-
-export FIRST_YEAR=1998
-export LAST_YEAR=2001
-export MAX_RANK=2
-export MIN_COHORT_SIZE=75
-export MIN_K=1
-export MAX_K=25
-export CHOSEN_K=3
+export R_LIBS_USER="${REPLICATION_LIBRARY:-$PWD/.replication/library}"

@@ -1,3 +1,5 @@
+source("config/paper.R")
+
 # Shared environment configuration for replication scripts
 #
 # This file centralizes environment variable parsing used across multiple scripts.
@@ -36,3 +38,9 @@ if (is.na(num_threads)) {
 PAPER_FIG_HEIGHT <- 3.5
 PAPER_FIG_WIDTH <- 8
 PAPER_FIG_HALF_WIDTH <- PAPER_FIG_WIDTH / 2
+
+for (name in c("FIRST_YEAR", "LAST_YEAR", "MAX_RANK", "MIN_COHORT_SIZE", "MIN_K", "MAX_K", "CHOSEN_K", "num_threads")) {
+  value <- get(name)
+  if (length(value) != 1L || is.na(value) || value < 1L) stop("Invalid positive integer setting: ", name)
+}
+if (LAST_YEAR < FIRST_YEAR || MIN_K > MAX_K || CHOSEN_K < MIN_K || CHOSEN_K > MAX_K) stop("Inconsistent paper configuration")

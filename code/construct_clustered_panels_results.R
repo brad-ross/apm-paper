@@ -3,7 +3,7 @@
 # This script reads the parquet output from construct_clustered_panels.R
 # and generates figures for the paper.
 
-devtools::load_all("../apm-package/r")
+library(apm)
 
 source("code/vwh_data_helpers.R")
 source("code/get_io_paths.R")

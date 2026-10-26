@@ -1,4 +1,4 @@
-devtools::load_all("../apm-package/r")
+library(apm)
 
 source("code/vwh_data_helpers.R")
 source("code/get_io_paths.R")

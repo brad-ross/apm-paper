@@ -85,7 +85,7 @@ firm_cluster_sizes <- firms_per_cluster |>
 
 # We need panel to get outcome_to_index mapping - create a minimal version
 # This requires the apm package to be loaded
-devtools::load_all("../apm-package/r")
+library(apm)
 
 panel <- create_estimation_panel(full_panel_df)
 

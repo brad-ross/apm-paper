@@ -1,3 +1,5 @@
+source("config/paper.R")
+
 DATA_PATH <- Sys.getenv("DATA_PATH")
 
 RAW_DATA_PATH <- file.path(DATA_PATH, "raw_data")
