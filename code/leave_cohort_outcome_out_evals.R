@@ -17,6 +17,10 @@ panel <- create_estimation_panel(full_panel_df)
 
 # Get extended estimation specifications (includes additional PC specs)
 est_specs <- get_default_est_specs(include_extended = TRUE)
+evaluation_targets <- get_paper_evaluation_targets(panel)
+expected_evaluations <- crossing(evaluation_targets |> select(cohort, outcome),
+                                spec = names(est_specs))
+print(str_glue("Paper evaluation sample: 15 cohorts, {nrow(evaluation_targets)} cohort-outcome batches, {length(est_specs)} specifications per batch"))
 
 # Compute cohort-specific parameters and check eigenvalue gaps
 cohort_specific_params <- est_cohort_specific_params(panel, est_specs, num_threads=num_threads)
@@ -34,53 +38,42 @@ for (spec in names(est_specs)) {
 # Get bootstrap draws
 wb <- get_default_bootstrap(panel)
 
-MIN_MASKED_COHORT_SIZE <- 1000
-
 observed_outcome_indices <- panel$get_observed_outcome_indices()
 cohort_sizes <- panel$get_cohort_sizes()
-cohort_order <- order(cohort_sizes, decreasing = TRUE)
+cohort_order <- unique(evaluation_targets$cohort)
 
 masked_metrics_path <- file.path(RESULTS_PATH, str_glue("masked_metrics_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.parquet"))
 masked_metrics <- data.frame(cohort = integer(), outcome = integer(), spec = character())
 if (file.exists(masked_metrics_path)) {
     masked_metrics <- read_parquet(masked_metrics_path)
 }
-
-expected_evaluations <- data.frame(cohort = integer(), outcome = integer(), spec = character())
+masked_metrics <- semi_join(masked_metrics, expected_evaluations,
+                            by = c("cohort", "outcome", "spec"))
+if (anyDuplicated(masked_metrics[c("cohort", "outcome", "spec")])) {
+    stop("Duplicate cohort/outcome/spec rows in evaluation checkpoint")
+}
+completed_batches <- 0L
 
 for (cohort_pos in seq_along(cohort_order)) {
     cohort_id <- cohort_order[[cohort_pos]]
     cohort_outcomes <- observed_outcome_indices[[cohort_id]]
 
-    if (length(cohort_outcomes) == 0L) {
-        next
-    }
-
     cohort_size <- cohort_sizes[[cohort_id]]
 
-    if (cohort_size < MIN_MASKED_COHORT_SIZE) {
-        break
-    }
-
     for (outcome_id in cohort_outcomes) {
-        print(str_glue("Checking if factors are still identified when masking cohort {cohort_id} ({cohort_size} workers), outcome {outcome_id}"))
-
         mask <- setNames(list(as.integer(outcome_id)), as.character(cohort_id))
-        masked_ooi <- get_masked_observed_outcome_indices(observed_outcome_indices, mask)
 
         existing_est_specs_for_cohort_outcome <- masked_metrics |>
             filter(cohort == cohort_id, outcome == outcome_id) |>
             pull(spec)
         non_existing_est_specs_for_cohort_outcome <- setdiff(names(est_specs), existing_est_specs_for_cohort_outcome)
 
-        if (!aligned_factors_identified(masked_ooi, MAX_RANK)) {
-            next
-        }
-        expected_evaluations <- bind_rows(expected_evaluations,
-            data.frame(cohort = cohort_id, outcome = outcome_id, spec = names(est_specs)))
         if (length(non_existing_est_specs_for_cohort_outcome) == 0) {
+            completed_batches <- completed_batches + 1L
+            print(str_glue("Reused batch; {completed_batches}/{nrow(evaluation_targets)} batches complete"))
             next
         }
+        print(str_glue("Estimating cohort {cohort_id} ({cohort_size} workers), outcome {outcome_id}; {completed_batches}/{nrow(evaluation_targets)} batches complete"))
 
         timing <- system.time({
             comps <- tryCatch(
@@ -98,8 +91,6 @@ for (cohort_pos in seq_along(cohort_order)) {
                 }
             )
         })
-
-        print(str_glue("Estimated masked cohort {cohort_id}, outcome {outcome_id} mean using est_specs {paste(non_existing_est_specs_for_cohort_outcome, collapse = ', ')} in {timing['elapsed']} seconds"))
 
         if (is.null(comps)) {
             next
@@ -125,6 +116,11 @@ for (cohort_pos in seq_along(cohort_order)) {
 
         # Checkpoint after every (cohort, outcome) pair
         write_parquet(masked_metrics, masked_metrics_path)
+        saved_specs <- masked_metrics |> filter(cohort == cohort_id, outcome == outcome_id) |> pull(spec)
+        if (all(names(est_specs) %in% saved_specs)) {
+            completed_batches <- completed_batches + 1L
+            print(str_glue("Completed masked cohort {cohort_id}, outcome {outcome_id} in {timing['elapsed']} seconds; {completed_batches}/{nrow(evaluation_targets)} batches complete"))
+        }
     }
 }
 
@@ -134,4 +130,5 @@ if (nrow(missing_evaluations)) {
     stop(str_glue("Evaluation incomplete: {nrow(missing_evaluations)} eligible cohort/outcome/spec results are missing. Successful checkpoints were retained; rerun the same target to resume."))
 }
 
+write_parquet(masked_metrics, masked_metrics_path)
 print(str_glue("Leave-cohort-outcome-out evaluation results saved to {masked_metrics_path}"))

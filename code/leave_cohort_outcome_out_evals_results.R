@@ -103,17 +103,6 @@ masked_metrics <- read_parquet(masked_metrics_path) |>
     filter(spec %in% names(est_specs)) |>
     mutate(cohort_outcome_weight = cohort_size * firms_for_outcome)
 
-# Get 15 largest cohorts for whom we have masked metrics
-largest_cohorts <- masked_metrics |>
-    select(cohort, cohort_size) |>
-    distinct() |>
-    arrange(desc(cohort_size)) |>
-    pull(cohort) |>
-    head(15)
-
-masked_metrics <- masked_metrics |>
-    filter(cohort %in% largest_cohorts)
-
 long_masked_metrics <- masked_metrics |>
     pivot_longer(c(bias, se, rmse), names_to = "err_stat")
 
