@@ -22,14 +22,10 @@ Source installation needs R development headers, Make, a C++17 compiler, BLAS/LA
 
 `config/paper.R` defaults `DATA_PATH` to the project's `data` directory and `OUTPUT_PATH` to `output`. Use absolute environment overrides for external storage. Scientific defaults are years 1998–2001, two-year bins, rank 2, minimum cohort size 75, k=1–25 and chosen k=3. `APM_SEED` defaults to `9001`, with integer overrides from 0 through 2147483647. Clustering and the 1,000-draw bootstrap receive this seed; individual bootstrap calls can override it. `APM_MAX_THREADS` controls local thread allocation. Historical output seeds/environments are unconfirmed; the current default is not evidence of their seed.
 
-Firm clustering retains all firms in the cleaned first-period provincial panels;
-the identification-based largest-supercohort restriction applies only to the
-final estimation panel. Evaluation targets are the 15 largest cohorts with at
-least three observed outcomes (cohort index breaks size ties). Every selected
-mask must preserve identification, or evaluation stops before estimation.
-The job logs its total and completed batch counts and checkpoints after each
-pair. Reporting summarizes the saved evaluation results without selecting
-cohorts again.
+We cluster all firms in the cleaned data within each province, then restrict
+the simulation panel to the largest super-cohort identified by the O³ algorithm.
+The simulation exercise evaluates the 15 largest cohorts with at least three
+observed outcomes.
 
 ## Public Figure 1a
 

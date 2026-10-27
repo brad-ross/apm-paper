@@ -8,6 +8,31 @@ source("code/estimation_helpers.R")
 library(tidyverse)
 library(arrow)
 
+# Select the paper's evaluation sample before estimation.
+# Keep the full panel for fitting; only the held-out targets are restricted.
+get_paper_evaluation_targets <- function(panel, model_rank = MAX_RANK) {
+    observed <- panel$get_observed_outcome_indices()
+    sizes <- panel$get_cohort_sizes()
+    eligible <- which(lengths(observed) >= 3L)
+    if (length(eligible) < 15L) stop("Paper evaluation requires 15 cohorts with at least three observed outcomes")
+    # Cohort index breaks size ties deterministically for a fixed panel.
+    selected <- head(eligible[order(-sizes[eligible], eligible)], 15L)
+    targets <- bind_rows(lapply(selected, function(cohort_id) {
+        data.frame(cohort = cohort_id, outcome = observed[[cohort_id]],
+                   cohort_size = sizes[[cohort_id]])
+    }))
+    for (i in seq_len(nrow(targets))) {
+        mask <- setNames(list(as.integer(targets$outcome[i])), as.character(targets$cohort[i]))
+        masked <- apm::get_masked_observed_outcome_indices(observed, mask)
+        if (!apm::aligned_factors_identified(masked, model_rank)) {
+            stop("Paper evaluation target loses identification: cohort ",
+                 targets$cohort[i], ", outcome ", targets$outcome[i],
+                 ". The selected sample cannot be silently replaced or reduced.")
+        }
+    }
+    targets
+}
+
 print(str_glue("Running leave-cohort-outcome-out evals for FIRST_YEAR={FIRST_YEAR}, LAST_YEAR={LAST_YEAR}, MAX_RANK={MAX_RANK}, YEAR_CLUSTER_SIZE={YEAR_CLUSTER_SIZE}, MIN_COHORT_SIZE={MIN_COHORT_SIZE}, CHOSEN_K={CHOSEN_K}"))
 
 # Load data using shared helpers
