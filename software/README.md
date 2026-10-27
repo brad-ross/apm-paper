@@ -7,14 +7,14 @@ license hashes, and the exact tarball SHA-256. The package version alone does
 not identify this build. No software release tag or release URL has been
 published for this asset; those manifest fields remain `null`.
 
-The baseline is `264907b0a2db57bf4c49285313b6eea4681f2b95`, including the
-merged seed and install fixes and match attribution. Its numerical equivalence
+The bundled revision is `a94bfba2f8865cce6d711fa2b0b9c9dc7ede39f8`, including the
+merged seed and install fixes, match attribution, and the public outcome-masking
+export required by the evaluation stage. Its numerical equivalence
 to historical paper outputs has not been verified. Building or loading this
 package does not rerun empirical analysis.
 
-The frozen asset records the builder's original `tools/build_source_package.R`
-location. That historical provenance remains unchanged; the builder now lives
-under `r/tools/`.
+The asset was built with `r/tools/build_source_package.R`; its exact source
+revision, builder hash, and archive hash are recorded in the manifest.
 
 ## Build in the APM project
 
