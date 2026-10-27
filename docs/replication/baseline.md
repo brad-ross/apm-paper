@@ -19,7 +19,7 @@ The map contains:
 - 9 current/recovered figure outputs: 8 VWH figures and Figure 1a. Rank-dependent families produce one file per rank in `2:MAX_RANK` (one rank at the baseline); within each such figure k spans 1–25. The two block-missingness plots each contain rank-1 and rank-2 curves. Province facets/cluster totals stay within the firms dot plot.
 - 3 LaTeX tables.
 - 61 in-text snippet files: 10 panel/configuration snippets, 36 evaluation snippets (4 specifications × 3 error statistics × 3 summary metrics), and 15 decomposition snippets (1 parameter × 3 specifications × 5 statistics). Rows expand every baseline combination; filename-pattern columns document the dynamic families. Fixed snippet/table filenames can be overwritten by another study configuration.
-- 3 unmapped historical figure filenames and 3 explicit gaps covering final manuscript reconciliation, external simulations, and other computational illustrations/appendices.
+- 3 historical figure filenames confirmed unused by the paper and 3 explicit gaps covering final manuscript reconciliation, external simulations, and other computational illustrations/appendices.
 
 The initial filename-only inspection found 75 files beneath `output/result_summaries`: 11 figures, 3 tables, 61 snippets. All 75 have rows. Figure 1a was absent at that inventory point and is included as the recovered target; subsequent generation is not a historical baseline. Presence means only a filename was seen. Historical files remain private and unchanged; none is certified as the authoritative manuscript reference or approved for redistribution.
 
@@ -29,7 +29,7 @@ The three extra historical filenames have no generating write site in the curren
 - `figures/block_missingness_id_firm_weighted_plot_start_year=1998_end_year=2001_year_cluster_size=2_min_cohort_size=75_rank=2.pdf`
 - `figures/cohort_size_dist_and_num_cohorts_by_k_plot_start_year=1998_end_year=2001_year_cluster_size=2_min_cohort_size=75.pdf`
 
-The first two coexist with current `_k=3.pdf` names. No equivalence or replacement is inferred. Author confirmation or producing historical source is required if any are manuscript imports. Directory names under `output/old_sim_results/` include `bea_sims` and several `leave_one_out_sims*` variants. Names alone do not establish whether they are simulations, empirical resampling, manuscript exhibits, or obsolete experiments. No standalone simulation generator was found among the current tracked computational sources. This is a coverage gap, not a claim that the manuscript has no simulations.
+The first two coexist with current `_k=3.pdf` names. No equivalence or replacement is inferred. On 2026-10-26, the author confirmed that none of these three exact files is referenced by the current paper sources. They are therefore outside required manuscript reproduction and no longer constitute a coverage question. The files are retained unchanged on disk. Directory names under `output/old_sim_results/` include `bea_sims` and several `leave_one_out_sims*` variants. Names alone do not establish whether they are simulations, empirical resampling, manuscript exhibits, or obsolete experiments. No standalone simulation generator was found among the current tracked computational sources. This is a coverage gap, not a claim that the manuscript has no simulations.
 
 ## Evidence inspected
 
