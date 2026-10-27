@@ -240,7 +240,7 @@ pipeline_main <- function(args) {
   lib <- Sys.getenv('REPLICATION_LIBRARY'); Sys.setenv(R_LIBS_USER=lib); .libPaths(c(lib,.libPaths()))
   users <- paste0(lib,'.users'); dir.create(users,recursive=TRUE,showWarnings=FALSE)
   marker <- file.path(users,paste0(Sys.info()[['nodename']],'-',Sys.getpid()))
-  library_lock <- pipeline_lock(paste0(lib,'.setup-lock'))
+  library_lock <- pipeline_lock(paste0(lib,'.setup-lock'),wait=60)
   tryCatch(writeLines(as.character(Sys.time()),marker),finally=unlink(library_lock,recursive=TRUE))
   on.exit(unlink(marker),add=TRUE)
   pipeline_state <<- file.path(Sys.getenv('OUTPUT_PATH'),'.replication')
