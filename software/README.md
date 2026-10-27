@@ -12,9 +12,13 @@ merged seed and install fixes and match attribution. Its numerical equivalence
 to historical paper outputs has not been verified. Building or loading this
 package does not rerun empirical analysis.
 
+The frozen asset records the builder's original `tools/build_source_package.R`
+location. That historical provenance remains unchanged; the builder now lives
+under `r/tools/`.
+
 ## Build in the APM project
 
-Run its `tools/build_source_package.R` with R and the build-only packages
+Run its `r/tools/build_source_package.R` with R and the build-only packages
 `digest` and `jsonlite`. The tool stages `r/` and places `core/src` under the
 staged package's `src/core/`. It rewrites binding/header include paths and both
 platforms' Makevars paths, and lists every staged C/C++ translation unit in
@@ -25,7 +29,7 @@ Ross and Lihua Lei. Scientific algorithms are unchanged.
 From the APM project directory, supply absolute destinations:
 
 ```sh
-Rscript tools/build_source_package.R \
+Rscript r/tools/build_source_package.R \
   --output-dir /absolute/path/to/replication/vendor \
   --manifest /absolute/path/to/replication/software/apm-source.json
 ```
