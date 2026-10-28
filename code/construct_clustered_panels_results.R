@@ -100,62 +100,64 @@ cohort_rectangles_for_plot <- panel_for_plot |>
         by = "cohort"
     )
 
-# Create ordered outcome levels with spacers between provinces
-outcome_levels <- cohort_rectangles_for_plot |>
-    pull(outcome) |>
-    unique() |>
-    as.character() |>
-    sort()
-
-# Parse outcomes to identify province boundaries
-outcome_provinces <- sapply(strsplit(outcome_levels, ":"), `[[`, 2)
-
-# Insert spacer levels where province changes
-outcome_levels_with_spacers <- character(0)
-for (i in seq_along(outcome_levels)) {
-    if (i > 1 && outcome_provinces[i] != outcome_provinces[i - 1]) {
-        # Add a spacer before this outcome (province boundary)
-        spacer_name <- paste0("__spacer_", i, "__")
-        outcome_levels_with_spacers <- c(outcome_levels_with_spacers, spacer_name)
-    }
-    outcome_levels_with_spacers <- c(outcome_levels_with_spacers, outcome_levels[i])
-}
-
-# Update the outcome factor in the data to include spacer levels
+# Use nested strips for year pairs and provinces, with cluster tick labels.
 cohort_rectangles_for_plot <- cohort_rectangles_for_plot |>
-    mutate(outcome = factor(as.character(outcome), levels = outcome_levels_with_spacers))
+    separate_wider_delim(outcome, delim = ":",
+                         names = c("year", "province", "cluster"),
+                         cols_remove = FALSE) |>
+    mutate(
+        year_pair = factor(str_glue("{year} - {as.integer(year) + YEAR_CLUSTER_SIZE - 1}")),
+        province = factor(province, levels = sort(unique(province))),
+        cluster = factor(cluster, levels = as.character(sort(unique(as.integer(cluster)))))
+    )
 
-# Create the panel structure plot
 panel_structure_plot <- (
     ggplot(cohort_rectangles_for_plot)
     + theme_test()
-    + theme(panel.background = element_rect(fill = "#f5e7e7"),
-            panel.border = element_blank(),
-            axis.text.x = element_text(size = 6))
-    + geom_tile(aes(y = (unit_id_min + unit_id_max) / 2, 
-                    height = unit_id_max - unit_id_min, 
-                    x = outcome), 
-                fill = "#7a0a0a")
-    + scale_x_discrete(
-        expand = c(0, 0), 
-        drop = FALSE, 
-        breaks = outcome_levels,  # Only show ticks for real outcomes, not spacers
-        labels = function(x) {
-            # Outcome format is "year:province:cluster"
-            split_x <- str_split_fixed(x, ":", 3)
-            year_cluster <- split_x[, 1]
-            year_cluster_label <- str_glue("{year_cluster} - {as.numeric(year_cluster) + YEAR_CLUSTER_SIZE - 1}")
-            province <- split_x[, 2]
-            cluster <- split_x[, 3]
-            if_else(cluster == "2",
-                if_else(province == "TV",
-                    str_glue("{cluster}\n[ {province} ]\n |------------- {year_cluster_label} -------------|"),
-                    str_glue("{cluster}\n[ {province} ]")),
-                str_glue("{cluster}"))
-        }
+    + geom_tile(aes(y = (unit_id_min + unit_id_max) / 2,
+                    height = unit_id_max - unit_id_min,
+                    x = cluster), fill = "#7a0a0a")
+    + ggh4x::facet_nested(
+        cols = vars(year_pair, province), switch = "x",
+        nest_line = element_blank()
     )
-    + scale_y_continuous(expand = c(0, 0), labels = scales::scientific)
+    + scale_x_discrete(expand = c(0, 0), drop = FALSE)
+    + scale_y_continuous(expand = c(0, 0), labels = function(x) {
+        parse(text = ifelse(x == 0, "0",
+            sub("e[+]?", " %*% 10^", format(x, scientific = TRUE, trim = TRUE))))
+    })
+    + theme(
+        panel.background = element_rect(fill = "#f5e7e7"),
+        panel.border = element_blank(),
+        panel.spacing.x = grid::unit(1.5, "mm"),
+        axis.text.x = element_text(
+            size = 7, colour = "black", face = "plain",
+            margin = margin(t = 2, b = 2.25)
+        ),
+        axis.ticks = element_line(colour = "black", linewidth = 0.3),
+        axis.ticks.length.x = grid::unit(2, "pt"),
+        strip.placement = "outside",
+        strip.background = ggh4x::element_part_rect(
+            side = "t", fill = NA, colour = "black", linewidth = 0.3
+        ),
+        strip.switch.pad.grid = grid::unit(0, "pt"),
+        strip.text.x = element_text(
+            size = 7, colour = "black", face = "plain",
+            margin = margin(t = 3.5, b = 3.5)
+        )
+    )
     + labs(x = "(Firm Group, Province, Year Range)", y = "Worker")
+)
+
+# Keep the spacer columns pale pink, as in the original continuous panel.
+panel_structure_plot <- ggplotGrob(panel_structure_plot)
+panel_cells <- panel_structure_plot$layout |>
+    filter(grepl("^panel-", name))
+panel_structure_plot <- gtable::gtable_add_grob(
+    panel_structure_plot,
+    grid::rectGrob(gp = grid::gpar(fill = "#f5e7e7", col = NA)),
+    t = min(panel_cells$t), b = max(panel_cells$b),
+    l = min(panel_cells$l), r = max(panel_cells$r), z = 0.5
 )
 
 ggsave(file.path(FIGURES_PATH, str_glue("match_outcome_panel_structure_plot_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.pdf")), panel_structure_plot, width = 4.5, height = 3.25)
