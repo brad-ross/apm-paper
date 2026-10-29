@@ -32,7 +32,7 @@ observed outcomes.
 - `code/analysis/`: evaluations and outcome decomposition.
 - `code/reporting/`: figures, tables, and manuscript snippets.
 - `code/lib/`: shared R configuration, data access, and analysis helpers.
-- `code/jobs/`: shell stage runner, cluster environment, and Slurm submission.
+- `code/jobs/`: individual stage scripts, shared environment/completion helpers, and Slurm submission.
 - `code/slurm/`: resource requests and wrappers for individual jobs.
 
 Run commands from the repository root. The Makefile owns the dependency graph;

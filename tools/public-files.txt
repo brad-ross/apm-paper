@@ -24,7 +24,16 @@ code/reporting/match_outcome_decomposition_results.R
 code/lib/driver_panel_helpers.R
 code/data/construct_driver_panel_grid.R
 code/reporting/driver_panel_results.R
-code/jobs/run_stage.sh
+code/jobs/common.sh
+code/jobs/conversion.sh
+code/jobs/panels.sh
+code/jobs/panel-reports.sh
+code/jobs/evals.sh
+code/jobs/eval-reports.sh
+code/jobs/decomposition.sh
+code/jobs/decomp-reports.sh
+code/jobs/prepare-figure.sh
+code/jobs/figure-1a.sh
 code/jobs/submit_pipeline.sh
 code/slurm/driver_panel_figure.slurm
 code/slurm/conversion.slurm

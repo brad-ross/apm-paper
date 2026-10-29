@@ -8,4 +8,4 @@ root=${1:?Repository root required}
 shift
 cd "$root"
 source code/jobs/init_server.sh "${SLURM_CPUS_PER_TASK:?}"
-exec bash code/jobs/run_stage.sh figure-1a "${1:-resume}"
+exec bash code/jobs/figure-1a.sh "${1:-resume}"
