@@ -25,21 +25,21 @@ build_archive <- function() {
     if (!startsWith(canonical, paste0(root, '/'))) stop('Path escapes project: ', path)
     canonical
   }
-  manifest_path <- regular('tools/public-files.txt')
+  manifest_path <- regular('tools/public_files.txt')
   files <- trimws(readLines(manifest_path, warn = FALSE))
   files <- files[nzchar(files) & !startsWith(files, '#')]
   if (!length(files) || anyDuplicated(files)) stop('Allowlist must contain unique explicit file paths')
   required <- c('README.md', 'README.pdf', 'LICENSE', 'Makefile', 'setup.R',
                 'renv.lock', 'code/lib/apm_source.R', 'config/paper.R',
-                'vendor/apm-source.json', 'vendor/README.md',
+                'vendor/apm_source.json', 'vendor/README.md',
                 'vendor/apm_0.1.0.tar.gz', 'data/processed_data/driver_panel_grid.csv',
                 'data/processed_data/README.md',
-                'tools/public-files.txt', 'tools/build_replication_archive.R')
+                'tools/public_files.txt', 'tools/build_replication_archive.R')
   missing <- setdiff(required, files)
   if (length(missing)) stop('Required entries missing from allowlist: ', paste(missing, collapse = ', '))
   data_docs <- c('data/README.md', 'data/raw_data/README.md',
                  'data/processed_data/README.md')
-  meta <- jsonlite::read_json(regular('vendor/apm-source.json'), simplifyVector = TRUE)
+  meta <- jsonlite::read_json(regular('vendor/apm_source.json'), simplifyVector = TRUE)
   source(regular('code/lib/apm_source.R'))
   ensure_apm_source(meta)
   source_files <- setdiff(files, "README.pdf")
@@ -50,7 +50,7 @@ build_archive <- function() {
     if (grepl('\\.csv$', path, ignore.case = TRUE) && startsWith(path, 'data/') && path != 'data/processed_data/driver_panel_grid.csv') stop('Unapproved data CSV: ', path)
     allowed <- path %in% c('README.md', 'README.pdf', 'LICENSE', 'Makefile', 'setup.R', 'renv.lock') ||
       path %in% c(data_docs, 'data/processed_data/driver_panel_grid.csv', 'vendor/apm_0.1.0.tar.gz') ||
-      grepl('^(code/(data|analysis|reporting|lib)/[^/]+[.]R|code/jobs/[^/]+[.]sh|code/slurm/[^/]+[.]slurm|config/paper[.]R|vendor/(README[.]md|apm-source[.]json)|tools/(public-files[.]txt|build_replication_archive[.]R))$', path)
+      grepl('^(code/(data|analysis|reporting|lib)/[^/]+[.]R|code/jobs/[^/]+[.]sh|code/slurm/[^/]+[.]slurm|config/paper[.]R|vendor/(README[.]md|apm_source[.]json)|tools/(public_files[.]txt|build_replication_archive[.]R))$', path)
     if (!allowed) stop('Path outside approved package namespaces: ', path)
   }
   if (!identical(meta$source_tarball, 'vendor/apm_0.1.0.tar.gz') ||

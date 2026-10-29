@@ -39,8 +39,8 @@ setup <- function() {
   if(!requireNamespace('jsonlite',quietly=TRUE)) {
     renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages='jsonlite',prompt=FALSE)
   }
-  if(!file.exists('vendor/apm-source.json')) stop('Missing bundled APM source manifest')
-  source_meta <- jsonlite::read_json('vendor/apm-source.json',simplifyVector=TRUE)
+  if(!file.exists('vendor/apm_source.json')) stop('Missing bundled APM source manifest')
+  source_meta <- jsonlite::read_json('vendor/apm_source.json',simplifyVector=TRUE)
   asset <- source_meta$source_tarball
   if(is.null(asset)) stop('APM manifest must contain source_tarball')
   install_apm <- !file.exists(file.path(lib,'apm','replication-source.json'))

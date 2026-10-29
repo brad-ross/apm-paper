@@ -49,7 +49,7 @@ while read -r stage dependencies; do
   fi
   mode=resume
   if [[ ",$force," == *,all,* || ",$force," == *,"$stage",* ]]; then mode=fresh; fi
-  reply=$(sbatch "${args[@]}" "code/slurm/$stage.slurm" "$root" "$mode")
+  reply=$(sbatch "${args[@]}" "code/slurm/${stage//-/_}.slurm" "$root" "$mode")
   [[ "$reply" =~ ^[0-9]+(\;[^[:space:]]+)?$ ]] || { echo "Invalid sbatch response: $reply" >&2; exit 1; }
   ids[$stage]=${reply%%;*}
   printf '%s\t%s\n' "$stage" "${ids[$stage]}" | tee -a "$record"

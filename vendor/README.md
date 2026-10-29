@@ -1,7 +1,7 @@
 # Pinned APM source package
 
 `apm_0.1.0.tar.gz` is the standalone R source package used by this replication.
-`apm-source.json` records its download URL, tarball path, SHA-256, and upstream commit.
+`apm_source.json` records its download URL, tarball path, SHA-256, and upstream commit.
 Setup downloads this file if absent, verifies its checksum and installs it; no
 sibling checkout is needed.
 The package contains its MIT license notices and an internal source manifest.
@@ -25,7 +25,7 @@ repository:
 ```sh
 Rscript r/tools/build_source_package.R \
   --output-dir /absolute/path/to/replication/vendor \
-  --manifest /absolute/path/to/replication/vendor/apm-source.json
+  --manifest /absolute/path/to/replication/vendor/apm_source.json
 ```
 
 The builder stages the R package and C++ sources as an installable source archive,

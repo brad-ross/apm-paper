@@ -9,7 +9,7 @@ ensure_apm_source <- function(meta) {
   }
   url <- meta$source_url
   if (is.null(url) || length(url) != 1L || !startsWith(url, 'https://')) {
-    stop('Missing pinned HTTPS download URL in vendor/apm-source.json')
+    stop('Missing pinned HTTPS download URL in vendor/apm_source.json')
   }
   dir.create(dirname(asset), recursive = TRUE, showWarnings = FALSE)
   download <- tempfile('apm-download-', tmpdir = dirname(asset))

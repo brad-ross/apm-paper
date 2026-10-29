@@ -30,7 +30,7 @@ $(STATE)/$(1).done: $(addprefix $(STATE)/,$(addsuffix .done,$(2))) $(if $(filter
 ifeq ($$(PLAN),1)
 	@: $(1) $(2)
 else
-	bash 'code/jobs/$(1).sh' '$(if $(filter all $(1),$(FORCED)),fresh,resume)'
+	bash 'code/jobs/$(subst -,_,$(1)).sh' '$(if $(filter all $(1),$(FORCED)),fresh,resume)'
 endif
 endef
 
@@ -60,7 +60,7 @@ $(GRID): $(if $(filter all prepare-figure,$(FORCED)),FORCE_RUN) | setup-once
 ifeq ($(PLAN),1)
 	@: prepare-figure
 else
-	bash code/jobs/prepare-figure.sh fresh
+	bash code/jobs/prepare_figure.sh fresh
 endif
 else
 $(GRID):
