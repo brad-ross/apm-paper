@@ -1,7 +1,6 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(trailingOnly=TRUE)
-scope <- if ('--scope' %in% args) args[match('--scope',args)+1L] else 'vwh'
-if (is.na(scope) || !scope %in% c('public','vwh')) stop('Use --scope public or --scope vwh')
+if (length(args)) stop('Run Rscript setup.R without arguments')
 source('config/paper.R')
 lib <- Sys.getenv('REPLICATION_LIBRARY')
 dir.create(lib, recursive=TRUE, showWarnings=FALSE)
@@ -28,7 +27,7 @@ setup <- function() {
     }
   }
   if (!requireNamespace('renv',quietly=TRUE)) stop('renv bootstrap failed')
-  lockfile <- if(scope=='public') 'config/public.lock' else 'renv.lock'
+  lockfile <- 'renv.lock'
   lock <- renv::lockfile_read(lockfile)
   current_r <- paste(R.version$major,R.version$minor,sep='.')
   if (current_r != lock$R$Version) stop('Use R ',lock$R$Version,' to match this replication environment (found ',current_r,').')
@@ -37,22 +36,17 @@ setup <- function() {
     file.exists(path) && identical(unname(read.dcf(path,fields='Version')[1,1]),record$Version)
   }
   needed <- names(Filter(function(x) !matches(x$Package,x),lock$Packages))
-  source_meta <- NULL
-  asset <- NULL
-  install_apm <- FALSE
-  if(scope=='vwh') {
-    if(!requireNamespace('jsonlite',quietly=TRUE)) {
-      renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages='jsonlite',prompt=FALSE)
-    }
-    if(!file.exists('vendor/apm-source.json')) stop('Missing bundled APM source manifest')
-    source_meta <- jsonlite::read_json('vendor/apm-source.json',simplifyVector=TRUE)
-    asset <- source_meta$source_tarball
-    if(is.null(asset)) stop('APM manifest must contain source_tarball')
-    install_apm <- !file.exists(file.path(lib,'apm','replication-source.json'))
-    if(!install_apm) {
-      installed <- jsonlite::read_json(file.path(lib,'apm','replication-source.json'),simplifyVector=TRUE)
-      install_apm <- !identical(installed$asset_sha256,source_meta$source_sha256)
-    }
+  if(!requireNamespace('jsonlite',quietly=TRUE)) {
+    renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages='jsonlite',prompt=FALSE)
+  }
+  if(!file.exists('vendor/apm-source.json')) stop('Missing bundled APM source manifest')
+  source_meta <- jsonlite::read_json('vendor/apm-source.json',simplifyVector=TRUE)
+  asset <- source_meta$source_tarball
+  if(is.null(asset)) stop('APM manifest must contain source_tarball')
+  install_apm <- !file.exists(file.path(lib,'apm','replication-source.json'))
+  if(!install_apm) {
+    installed <- jsonlite::read_json(file.path(lib,'apm','replication-source.json'),simplifyVector=TRUE)
+    install_apm <- !identical(installed$asset_sha256,source_meta$source_sha256)
   }
   for(name in needed) {
     for(base in previous) {
@@ -68,18 +62,16 @@ setup <- function() {
   needed <- names(Filter(function(x) !matches(x$Package,x),lock$Packages))
   if(length(needed)) renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages=needed,prompt=FALSE)
   if(!all(vapply(names(lock$Packages),function(n) matches(n,lock$Packages[[n]]),logical(1)))) stop('Dependency restoration incomplete')
-  if(scope=='vwh') {
-    source('code/lib/apm_source.R')
-    asset <- ensure_apm_source(source_meta)
-    if(install_apm) {
-      if(!nzchar(Sys.which('make'))) stop('Installing APM requires Make and a C++17 compiler; see README')
-      status <- system2(file.path(R.home('bin'),'R'), c('CMD','INSTALL',paste0('--library=',shQuote(lib)),shQuote(asset)))
-      if(status != 0L) stop('APM installation failed; previous installation was not certified')
-      if(!file.exists(file.path(lib,'apm','DESCRIPTION'))) stop('APM installation failed')
-      jsonlite::write_json(list(asset_sha256=source_meta$source_sha256,commit=source_meta$upstream_commit),file.path(lib,'apm','replication-source.json'),auto_unbox=TRUE,pretty=TRUE)
-    }
-    if(!requireNamespace('apm',quietly=TRUE,lib.loc=lib)) stop('Installed APM does not load')
+  source('code/lib/apm_source.R')
+  asset <- ensure_apm_source(source_meta)
+  if(install_apm) {
+    if(!nzchar(Sys.which('make'))) stop('Installing APM requires Make and a C++17 compiler; see README')
+    status <- system2(file.path(R.home('bin'),'R'), c('CMD','INSTALL',paste0('--library=',shQuote(lib)),shQuote(asset)))
+    if(status != 0L) stop('APM installation failed; previous installation was not certified')
+    if(!file.exists(file.path(lib,'apm','DESCRIPTION'))) stop('APM installation failed')
+    jsonlite::write_json(list(asset_sha256=source_meta$source_sha256,commit=source_meta$upstream_commit),file.path(lib,'apm','replication-source.json'),auto_unbox=TRUE,pretty=TRUE)
   }
-  cat('Setup ready:',scope,'environment in',lib,'\n')
+  if(!requireNamespace('apm',quietly=TRUE,lib.loc=lib)) stop('Installed APM does not load')
+  cat('Setup ready: environment in',lib,'\n')
 }
 setup()

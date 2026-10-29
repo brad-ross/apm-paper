@@ -17,12 +17,9 @@ endif
 .DEFAULT_GOAL := figure-1a
 # Local jobs share the selected thread allocation; use Slurm for parallel branches.
 .NOTPARALLEL:
-.PHONY: setup setup-public setup-vwh FORCE_RUN vwh-all private-figure submit-vwh submit-figure submit-public-figure
-setup: setup-vwh
-setup-vwh:
-	$(R) --vanilla setup.R --scope vwh
-setup-public:
-	$(R) --vanilla setup.R --scope public
+.PHONY: setup FORCE_RUN vwh-all private-figure submit-vwh submit-figure submit-public-figure
+setup:
+	$(R) --vanilla setup.R
 
 # make -n PLAN=1 lists only stages Make would execute and their dependencies.
 # The Slurm submitter consumes this same graph without touching completion markers.
@@ -40,7 +37,7 @@ endef
 .PHONY: setup-once
 setup-once:
 ifneq ($(PLAN),1)
-	$(R) --vanilla setup.R --scope $(if $(filter vwh-all conversion panels panel-reports evals eval-reports decomposition decomp-reports,$(MAKECMDGOALS)),vwh,public)
+	$(R) --vanilla setup.R
 endif
 
 $(eval $(call stage,conversion,,))

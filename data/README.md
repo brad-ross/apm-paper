@@ -7,5 +7,5 @@ its codebook in `processed_data/README.md`.
 
 Data files remain ignored by Git. The archive explicitly includes the approved
 grid and directory READMEs, without authorizing any other data. See
-`docs/replication/data-sources.md` for access, citations, rights and provenance.
+the root `README.md` for access, citations, rights and provenance.
 Never copy the data directory wholesale into a public archive.

@@ -6,7 +6,7 @@ build_archive <- function() {
   lib <- Sys.getenv('REPLICATION_LIBRARY', file.path(root, '.replication', 'library'))
   if (dir.exists(lib)) .libPaths(c(lib, .libPaths()))
   for (package in c('digest', 'jsonlite')) {
-    if (!requireNamespace(package, quietly = TRUE)) stop('Missing ', package, '; run Rscript setup.R --scope public first')
+    if (!requireNamespace(package, quietly = TRUE)) stop('Missing ', package, '; run Rscript setup.R first')
   }
   sha <- function(path) digest::digest(file = path, algo = 'sha256')
   # Check every component before normalization: normalizePath alone hides symlinks.
@@ -30,11 +30,10 @@ build_archive <- function() {
   files <- files[nzchar(files) & !startsWith(files, '#')]
   if (!length(files) || anyDuplicated(files)) stop('Allowlist must contain unique explicit file paths')
   required <- c('README.md', 'README.pdf', 'LICENSE', 'Makefile', 'setup.R',
-                'renv.lock', 'code/lib/apm_source.R', 'config/public.lock', 'config/paper.R',
+                'renv.lock', 'code/lib/apm_source.R', 'config/paper.R',
                 'vendor/apm-source.json', 'vendor/README.md',
                 'vendor/apm_0.1.0.tar.gz', 'data/processed_data/driver_panel_grid.csv',
                 'data/processed_data/README.md',
-                'docs/replication/data-sources.md', 'docs/replication/exhibits.csv',
                 'tools/public-files.txt', 'tools/build_replication_archive.R')
   missing <- setdiff(required, files)
   if (length(missing)) stop('Required entries missing from allowlist: ', paste(missing, collapse = ', '))
@@ -51,7 +50,7 @@ build_archive <- function() {
     if (grepl('\\.csv$', path, ignore.case = TRUE) && startsWith(path, 'data/') && path != 'data/processed_data/driver_panel_grid.csv') stop('Unapproved data CSV: ', path)
     allowed <- path %in% c('README.md', 'README.pdf', 'LICENSE', 'Makefile', 'setup.R', 'renv.lock') ||
       path %in% c(data_docs, 'data/processed_data/driver_panel_grid.csv', 'vendor/apm_0.1.0.tar.gz') ||
-      grepl('^(code/(data|analysis|reporting|lib)/[^/]+[.]R|code/jobs/[^/]+[.]sh|code/slurm/[^/]+[.]slurm|config/(paper[.]R|public[.]lock)|vendor/(README[.]md|apm-source[.]json)|docs/replication/(data-sources[.]md|exhibits[.]csv)|tools/(public-files[.]txt|build_replication_archive[.]R))$', path)
+      grepl('^(code/(data|analysis|reporting|lib)/[^/]+[.]R|code/jobs/[^/]+[.]sh|code/slurm/[^/]+[.]slurm|config/paper[.]R|vendor/(README[.]md|apm-source[.]json)|tools/(public-files[.]txt|build_replication_archive[.]R))$', path)
     if (!allowed) stop('Path outside approved package namespaces: ', path)
   }
   if (!identical(meta$source_tarball, 'vendor/apm_0.1.0.tar.gz') ||

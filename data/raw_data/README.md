@@ -4,7 +4,7 @@ Authorized VWH users place `anagr.dta` (workers), `azien.dta` (firms) and
 `contr.dta` (employment/contributions) here under `DATA_PATH`. All three are
 required. Conversion writes `workers.parquet`, `firms.parquet` and
 `earnings.parquet` here. FRDB access instructions and unconfirmed access costs,
-delays and provenance are in `docs/replication/data-sources.md`.
+delays and provenance are in the root `README.md`.
 
 Conversion reads the legacy `azien.dta` and `contr.dta` with explicit Latin-1
 decoding: they contain bytes undefined in Haven's default Windows-1252

@@ -10,6 +10,11 @@ renv/library/
 renv/staging/
 dist/
 
-# Downloaded, checksum-verified APM release asset (included in journal archives).
 vendor/*.tar.gz
 vendor/apm-download-*
+
+# Local replication planning and verification records.
+docs/replication/baseline.md
+docs/replication/data-sources.md
+docs/replication/exhibits.csv
+docs/replication/verification.md

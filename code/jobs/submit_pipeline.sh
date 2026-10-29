@@ -16,8 +16,8 @@ while (($#)); do
   esac
 done
 case "$target" in
-  vwh-all|conversion|panels|panel-reports|evals|eval-reports|decomposition|decomp-reports) scope=vwh ;;
-  private-figure|prepare-figure|figure-1a) scope=public ;;
+  vwh-all|conversion|panels|panel-reports|evals|eval-reports|decomposition|decomp-reports) ;;
+  private-figure|prepare-figure|figure-1a) ;;
   *) echo "Unknown target: $target" >&2; exit 1 ;;
 esac
 export DATA_PATH="${DATA_PATH:-$root/data}"
@@ -27,7 +27,7 @@ export REPLICATION_LIBRARY="${REPLICATION_LIBRARY:-$root/.replication/library}"
 plan=$(make --no-print-directory -n -s PLAN=1 FORCE="$force" "$target" | sed -n 's/^: //p')
 if $dry_run; then printf '%s\n' "$plan"; exit 0; fi
 source code/jobs/init_server.sh "${APM_MAX_THREADS:-1}"
-"${R:-Rscript}" --vanilla setup.R --scope "$scope"
+"${R:-Rscript}" --vanilla setup.R
 [[ -n "$plan" ]] || { echo 'All requested stages are complete.'; exit 0; }
 logdir="$OUTPUT_PATH/.replication/logs"
 mkdir -p "$logdir"

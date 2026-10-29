@@ -7,7 +7,6 @@ Makefile
 setup.R
 renv.lock
 config/paper.R
-config/public.lock
 code/lib/apm_source.R
 code/lib/env_config.R
 code/lib/get_io_paths.R
@@ -41,8 +40,6 @@ data/README.md
 data/raw_data/README.md
 data/processed_data/README.md
 data/processed_data/driver_panel_grid.csv
-docs/replication/data-sources.md
-docs/replication/exhibits.csv
 vendor/README.md
 vendor/apm-source.json
 vendor/apm_0.1.0.tar.gz

@@ -13,67 +13,9 @@ library(tidyverse)
 library(arrow)
 library(kableExtra)
 
-# Weighted quantile function
-# Computes weighted quantiles with optional interpolation
-wtd_quantile <- function(x, weights = NULL, probs = c(0.25, 0.5, 0.75),
-                         na.rm = FALSE, interpolate = FALSE, names = TRUE) {
-    if (is.null(weights)) weights <- rep(1, length(x))
-    if (!is.numeric(x)) stop("`x` must be numeric.")
-    if (length(weights) != length(x)) stop("`weights` must have same length as `x`.")
-    if (any(!is.finite(weights))) stop("`weights` must be finite.")
-    if (any(weights < 0)) stop("`weights` must be non-negative.")
-    if (!is.numeric(probs) || anyNA(probs) || any(probs < 0 | probs > 1))
-        stop("`probs` must be numeric in [0, 1].")
-
-    if (na.rm) {
-        keep <- is.finite(x) & is.finite(weights) & !is.na(x) & !is.na(weights)
-        x <- x[keep]; weights <- weights[keep]
-    } else {
-        if (anyNA(x) || anyNA(weights) || any(!is.finite(x)))
-            stop("Missing/non-finite values present; set `na.rm = TRUE` to drop them.")
-    }
-    if (!length(x)) return(rep(NA_real_, length(probs)))
-
-    # Drop zero-weight observations
-    keep <- weights > 0
-    x <- x[keep]; weights <- weights[keep]
-    if (!length(x)) stop("All weights are zero after filtering.")
-
-    # Order by x
-    ord <- order(x)
-    x <- x[ord]
-    w <- weights[ord]
-
-    # Weighted CDF
-    cdf <- cumsum(w) / sum(w)
-
-    # For each p, j = number of cdf values <= p
-    j <- findInterval(probs, cdf, rightmost.closed = TRUE)
-    n <- length(x)
-
-    if (!interpolate) {
-        # Step-function inverse CDF: smallest x with CDF >= p
-        idx <- pmin(j + 1L, n)
-        q <- x[idx]
-    } else {
-        # Piecewise linear interpolation between adjacent x's
-        left_cdf  <- ifelse(j == 0, 0, cdf[j])
-        right_cdf <- cdf[pmin(j + 1L, n)]
-        left_x    <- ifelse(j == 0, x[1], x[j])
-        right_x   <- x[pmin(j + 1L, n)]
-        t <- (probs - left_cdf) / pmax(right_cdf - left_cdf, .Machine$double.eps)
-        q <- left_x + t * (right_x - left_x)
-    }
-
-    if (names) names(q) <- paste0(format(100 * probs, trim = TRUE), "%")
-    q
-}
-
-# Load panel data to get outcome indices
 clustered_panels <- load_clustered_panels()
 full_panel_df <- filter_panel_by_k(clustered_panels)
 
-# Load firm clusters and compute sizes
 firm_clusters <- load_firm_clusters()
 firms_per_cluster <- compute_firms_per_cluster(firm_clusters) |>
     filter(k == CHOSEN_K)
@@ -93,10 +35,8 @@ firm_cluster_sizes <- firm_cluster_sizes |>
     mutate(outcome_idx = panel$get_outcome_to_index()[outcome]) |>
     select(outcome_idx, firms_for_outcome)
 
-# Get estimation specifications
 est_specs <- get_default_est_specs(include_extended = TRUE)
 
-# Read masked metrics
 masked_metrics_path <- file.path(RESULTS_PATH, str_glue("masked_metrics_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_min_cohort_size={MIN_COHORT_SIZE}_k={CHOSEN_K}.parquet"))
 masked_metrics <- read_parquet(masked_metrics_path) |>
     inner_join(firm_cluster_sizes, by = c("outcome" = "outcome_idx")) |>

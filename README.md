@@ -6,17 +6,16 @@ This package supplies empirical code and approved numerical plotting inputs for 
 
 ## Requirements and setup
 
-Run commands from the extracted package root on a Unix-like system with Bash, Make and **R 4.3.0**. `renv.lock` pins the VWH dependencies; `config/public.lock` pins the smaller rendering environment. Setup restores packages into `.replication/library`, leaving matching installations in place. Internet access is needed for unavailable dependencies. Set `REPLICATION_LIBRARY` to an absolute path to use another library. Compute nodes must see the same library and files as the submission host. Setup serializes installation. Do not run setup or install packages into a library while jobs use it; wait for those jobs or select a different library.
+Run commands from the extracted package root on a Unix-like system with Bash, Make and **R 4.3.0**. `renv.lock` pins the R dependencies for the entire replication pipeline. Setup restores packages into `.replication/library`, leaving matching installations in place. Internet access is needed for unavailable dependencies. Set `REPLICATION_LIBRARY` to an absolute path to use another library. Compute nodes must see the same library and files as the submission host. Setup serializes installation. Do not run setup or install packages into a library while jobs use it; wait for those jobs or select a different library.
 
-Execution and submission targets automatically run scoped setup before work. Standalone setup is available:
+Execution and submission targets automatically run setup before work. Standalone setup is available:
 
 ```sh
 make setup
-Rscript setup.R --scope public
-Rscript setup.R --scope vwh
+Rscript setup.R
 ```
 
-Public setup requires only rendering dependencies. VWH setup also downloads, verifies and installs the exact `vendor/apm_0.1.0.tar.gz` when it is not already supplied. Its SHA-256, full upstream commit and packaging/install evidence are in `vendor/apm-source.json`; version `0.1.0` alone does not identify the build. No sibling checkout is required. The source asset is pinned to [apm v0.1.0](https://github.com/brad-ross/apm/releases/tag/r-v0.1.0-replication). See `vendor/README.md` for standalone installation and the source asset's MIT notices.
+Setup restores all dependencies and downloads, verifies and installs the exact `vendor/apm_0.1.0.tar.gz` when it is not already supplied. Its download URL, SHA-256 and full upstream commit are in `vendor/apm-source.json`; version `0.1.0` alone does not identify the build. No sibling checkout is required. The source asset is pinned to [apm v0.1.0](https://github.com/brad-ross/apm/releases/tag/r-v0.1.0-replication). See `vendor/README.md` for standalone installation and the source asset's MIT notices.
 
 Source installation needs R development headers, Make, a C++17 compiler, BLAS/LAPACK and Fortran linking support. RcppParallel supplies APM's threading interface. Full VWH installation also needs system support for the locked Arrow package and other source-built dependencies. Lockfiles do not install operating-system libraries or compilers. Resolve installation errors against the relevant package's system requirements before retrying. Figure 1a rendering takes roughly one second on the tested Linux/R 4.3.0 environment. The full evaluation stage took roughly nine hours with the documented 250-CPU allocation; timings depend on hardware and scheduling.
 
@@ -56,7 +55,7 @@ Geometry and style were recovered from `eed1a22:code_old/visualize_panels.R:279-
 
 ## VWH access and execution
 
-Apply through [Fondazione Rodolfo Debenedetti (FRDB)](https://www.frdb.org/en/dati/dati-inps-carriere-lavorative-in-veneto/): complete and sign its linked form and email it to `info@frdb.org`. Eligibility, approval, fees, delays, delivery and journal verification access require provider confirmation. The authors' acquisition date, extract version and agreement are unconfirmed. FRDB requests credit: “Dataset developed by the Economics Department in Università Ca’ Foscari Venezia under the supervision of Giuseppe Tattara”. See `docs/replication/data-sources.md` for coverage and provenance caveats.
+Apply through [Fondazione Rodolfo Debenedetti (FRDB)](https://www.frdb.org/en/dati/dati-inps-carriere-lavorative-in-veneto/): complete and sign its linked form and email it to `info@frdb.org`. Eligibility, approval, fees, delays, delivery and journal verification access require provider confirmation. The authors' acquisition date, extract version and agreement are unconfirmed. FRDB requests credit: “Dataset developed by the Economics Department in Università Ca’ Foscari Venezia under the supervision of Giuseppe Tattara”.
 
 Place `anagr.dta`, `azien.dta` and `contr.dta` in `DATA_PATH/raw_data/`. All three are required. Conversion writes `workers.parquet`, `firms.parquet` and `earnings.parquet` there. Firm clusters and clustered panels go under `processed_data`. Raw, converted and derived VWH records are restricted and excluded from the archive.
 
@@ -68,7 +67,7 @@ make vwh-all FORCE=conversion
 make vwh-all FORCE=all
 ```
 
-The graph is conversion → panels, followed by panel reports and two branches: evaluation → evaluation reports, and decomposition → decomposition reports. Named targets are `conversion`, `panels`, `panel-reports`, `evals`, `eval-reports`, `decomposition` and `decomp-reports`; individual targets include prerequisites. Results go to `output/empirical_results` and `output/result_summaries/{figures,tables,snippets}`. `docs/replication/exhibits.csv` maps exact filenames, scripts and inputs.
+The graph is conversion → panels, followed by panel reports and two branches: evaluation → evaluation reports, and decomposition → decomposition reports. Named targets are `conversion`, `panels`, `panel-reports`, `evals`, `eval-reports`, `decomposition` and `decomp-reports`; individual targets include prerequisites. Results go to `output/empirical_results` and `output/result_summaries/{figures,tables,snippets}`.
 
 On a configured Slurm cluster, submit from a login/submission host:
 
@@ -103,7 +102,7 @@ bash code/jobs/submit_pipeline.sh --target eval-reports --force evals --dry-run
 
 Two full runs of the frozen scientific pipeline reproduced the same numerical results and rendered figures. Some results differ from the historical archive. The simplified Make/shell orchestration is checked with manual dry runs and synthetic stage/submission commands; the full scientific pipeline was not rerun for this orchestration change.
 
-Authors must reconcile final manuscript/appendix coverage: Figure 1a is identified, while other exact references, external simulations and illustrations remain open in the exhibit map. The author confirmed on 2026-10-26 that the three legacy figure filenames are not referenced by the paper sources; they are excluded from required reproduction. Overleaf access is not required to run the package. Authors separately upload approved outputs using existing relative paths and compile the final manuscript to check imports; local rendering does not establish that check.
+Authors must reconcile final manuscript/appendix coverage: Figure 1a is identified, while other exact references, external simulations and illustrations remain to be confirmed. The author confirmed on 2026-10-26 that the three legacy figure filenames are not referenced by the paper sources; they are excluded from required reproduction. Overleaf access is not required to run the package. Authors separately upload approved outputs using existing relative paths and compile the final manuscript to check imports; local rendering does not establish that check.
 
 The [Econometric Society policy](https://www.econometricsociety.org/publications/es-data-editor-website/data-and-code-availability-policy) and [checklist](https://www.econometricsociety.org/uploads/reports%20Editorial/ES_Data_Editor_Website/Checklist.pdf) govern exemptions, transformation programs, verification and deposit. Authors must resolve the restricted-data arrangement with the Editorial Office/Data Editor before claiming submission readiness. The [Kline–Saggio–Sølvsten archive](https://eml.berkeley.edu/~pkline/papers/KSS2020_COMP.zip) is a documentation precedent for separating access, construction and analysis; its exemption does not transfer to this paper. No synthetic substitute or hosted driver-data access has been approved here.
 

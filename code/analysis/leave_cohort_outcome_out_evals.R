@@ -35,7 +35,6 @@ get_paper_evaluation_targets <- function(panel, model_rank = MAX_RANK) {
 
 print(str_glue("Running leave-cohort-outcome-out evals for FIRST_YEAR={FIRST_YEAR}, LAST_YEAR={LAST_YEAR}, MAX_RANK={MAX_RANK}, YEAR_CLUSTER_SIZE={YEAR_CLUSTER_SIZE}, MIN_COHORT_SIZE={MIN_COHORT_SIZE}, CHOSEN_K={CHOSEN_K}"))
 
-# Load data using shared helpers
 clustered_panels <- load_clustered_panels()
 full_panel_df <- filter_panel_by_k(clustered_panels)
 panel <- create_estimation_panel(full_panel_df)
@@ -60,7 +59,6 @@ for (spec in names(est_specs)) {
     print(str_glue("apm for spec {spec} (r = {r}) has:\n lambda_(1:r+2) = [{paste(lambdas[1:(r+2L)], collapse = ', ')}],\n lambda_(r+1) - lambda_r = {lambda_r_plus_1 - lambda_r},\n lambda_(r+1) / lambda_r = {lambda_r_plus_1/lambda_r}"))
 }
 
-# Get bootstrap draws
 wb <- get_default_bootstrap(panel)
 
 observed_outcome_indices <- panel$get_observed_outcome_indices()
@@ -97,9 +95,9 @@ for (cohort_pos in seq_along(cohort_order)) {
         existing_est_specs_for_cohort_outcome <- masked_metrics |>
             filter(cohort == cohort_id, outcome == outcome_id) |>
             pull(spec)
-        non_existing_est_specs_for_cohort_outcome <- setdiff(names(est_specs), existing_est_specs_for_cohort_outcome)
+        missing_specs <- setdiff(names(est_specs), existing_est_specs_for_cohort_outcome)
 
-        if (length(non_existing_est_specs_for_cohort_outcome) == 0) {
+        if (length(missing_specs) == 0) {
             completed_batches <- completed_batches + 1L
             print(str_glue("Reused batch; {completed_batches}/{nrow(evaluation_targets)} batches complete"))
             next
@@ -109,12 +107,12 @@ for (cohort_pos in seq_along(cohort_order)) {
         timing <- system.time({
             comps <- tryCatch(
                 est_target_param_components(panel,
-                    est_specs = est_specs[setdiff(names(est_specs), existing_est_specs_for_cohort_outcome)],
+                    est_specs = est_specs[missing_specs],
                     bootstrap = wb,
                     num_threads = num_threads,
                     cohort_outcomes_to_mask = mask,
                     est_outcome_means_via_imputation = TRUE,
-                    imputation_options = list(solver = "lsmr", lsmr_atol = 1e-8, lsmr_btol = 1e-8, lsmr_max_iters = 1000, lsmr_conlim = Inf)
+                    imputation_options = get_imputation_options()
                 ),
                 error = function(err) {
                     warning(str_glue("est_target_param_components failed for masked cohort {cohort_id}, outcome {outcome_id}: {err$message}"))
@@ -145,7 +143,6 @@ for (cohort_pos in seq_along(cohort_order)) {
         )
         masked_metrics <- masked_metrics |> bind_rows(metrics)
 
-        # Checkpoint after every (cohort, outcome) pair
         write_parquet(masked_metrics, masked_metrics_path)
         saved_specs <- masked_metrics |> filter(cohort == cohort_id, outcome == outcome_id) |> pull(spec)
         if (all(names(est_specs) %in% saved_specs)) {

@@ -432,7 +432,6 @@ ggsave(file.path(FIGURES_PATH, str_glue("block_missingness_id_firm_weighted_plot
 # Generate summary statistics table comparing panel subsets
 # ============================================================================
 
-# Load raw data for full panel statistics
 raw_earnings <- read_raw_earnings_data()
 raw_firms <- read_raw_firm_data()
 
