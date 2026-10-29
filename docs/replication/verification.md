@@ -1,3 +1,31 @@
+# Verification update — 2026-10-28
+
+Two independent full runs of the frozen scientific pipeline reproduced exactly
+the same evaluation estimates, decomposition, tables/snippets and rendered
+figures. Generated panels and assignments matched after row alignment across
+all 25 cluster-count settings. This establishes repeatability under that fixed
+software/configuration, not equality to the historical paper outputs.
+
+The current Make/shell workflow replaces the former hash-based R controller.
+Temporary manual checks cover stage ordering, successful-marker reuse, force
+propagation, failed stages, evaluation checkpoint restart/resume, private/public
+grid handling, Slurm dependency IDs, side-effect-free planning, and setup failure
+before submission. No permanent tests were added and no empirical stage was
+rerun for this orchestration change. The code folders and archive allowlist now
+use data/analysis/reporting/lib/jobs/slurm subdirectories. The reorganized source
+passes R parsing and shell syntax checks. Temporary ZIP/tar archives built and
+extracted successfully with the revised allowlist. Public Figure 1a rendered
+from the extracted package, a repeat invocation reused its completion marker,
+and explicit force rendered it again. No restricted inputs were used in those
+archive checks. The driver grid now lives at
+`data/processed_data/driver_panel_grid.csv`; its bytes match the archived grid.
+The revised archive rendered successfully after extraction without creating a
+`clean_data` folder. A temporary attempt to allowlist another processed-data
+file was rejected as an unapproved data path.
+
+The dated record below describes the earlier implementation and its checks;
+its hash/registry/lock behavior is not part of the current workflow.
+
 # Verification record — 2026-10-26
 
 This record distinguishes executed checks from intended functionality. No VWH
@@ -34,7 +62,7 @@ local archive.
 
 The installed R dependencies are pinned in the two lockfiles. Setup checks use
 project-local libraries, including an automatic public-only dependency scope.
-APM source and installation evidence is recorded in `software/apm-source.json`;
+APM source and installation evidence is recorded in `vendor/apm-source.json`;
 its upstream commit is not evidence of historical numerical equivalence. The
 standalone installation used GNU g++ 11.4.0, the R 4.3.0 bundled BLAS and system
 LAPACK 3.10.0. These describe the checked host, not portable minimum versions.

@@ -44,8 +44,8 @@ setup <- function() {
     if(!requireNamespace('jsonlite',quietly=TRUE)) {
       renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages='jsonlite',prompt=FALSE)
     }
-    if(!file.exists('software/apm-source.json')) stop('Missing bundled APM source manifest')
-    source_meta <- jsonlite::read_json('software/apm-source.json',simplifyVector=TRUE)
+    if(!file.exists('vendor/apm-source.json')) stop('Missing bundled APM source manifest')
+    source_meta <- jsonlite::read_json('vendor/apm-source.json',simplifyVector=TRUE)
     asset <- source_meta$source_tarball
     if(is.null(asset)) stop('APM manifest must contain source_tarball')
     install_apm <- !file.exists(file.path(lib,'apm','replication-source.json'))
@@ -54,8 +54,6 @@ setup <- function() {
       install_apm <- !identical(installed$asset_sha256,source_meta$source_sha256)
     }
   }
-  users <- list.files(paste0(lib,'.users'),all.files=FALSE,full.names=TRUE)
-  if((length(needed)||install_apm) && length(users)) stop('Project library is used by active jobs. Use a separate REPLICATION_LIBRARY or wait for them to finish.')
   for(name in needed) {
     for(base in previous) {
       src <- file.path(base,name)
@@ -71,7 +69,8 @@ setup <- function() {
   if(length(needed)) renv::restore(project=getwd(),library=lib,lockfile=lockfile,packages=needed,prompt=FALSE)
   if(!all(vapply(names(lock$Packages),function(n) matches(n,lock$Packages[[n]]),logical(1)))) stop('Dependency restoration incomplete')
   if(scope=='vwh') {
-    if(!file.exists(asset) || digest::digest(file=asset,algo='sha256') != source_meta$source_sha256) stop('Bundled APM source checksum mismatch')
+    source('code/lib/apm_source.R')
+    asset <- ensure_apm_source(source_meta)
     if(install_apm) {
       if(!nzchar(Sys.which('make'))) stop('Installing APM requires Make and a C++17 compiler; see README')
       status <- system2(file.path(R.home('bin'),'R'), c('CMD','INSTALL',paste0('--library=',shQuote(lib)),shQuote(asset)))

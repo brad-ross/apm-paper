@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "package": "apm",
+  "version": "0.1.0",
+  "repository": "https://github.com/brad-ross/apm",
+  "upstream_commit": "a94bfba2f8865cce6d711fa2b0b9c9dc7ede39f8",
+  "release_tag": "r-v0.1.0-replication",
+  "release_url": "https://github.com/brad-ross/apm/releases/tag/r-v0.1.0-replication",
+  "source_tarball": "vendor/apm_0.1.0.tar.gz",
+  "source_sha256": "996f1d24da630d8a0396c8b2486e5c0919d24ae0bad45b3a9ac0fc554da40449",
+  "installed_provenance": "APM-SOURCE.json",
+  "packaging": {
+    "tool": "r/tools/build_source_package.R",
+    "tool_sha256": "7b677dd5909ea9062afea195faa08b7a1e315b33c9f6dccf4db3ccc4a01bbba0",
+    "root_license_sha256": "643c4478e312d9b3c1088c6ea7d6d1dce1e9c941cc204ab3f65b6dab137b2fa8",
+    "r_license_sha256": "bb327f8b9652bfb3a0189d5b830602ada72571651922485a518e355047fc564d",
+    "tracked_scientific_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "transformations": [
+      "Stage r/ and core/src under src/core",
+      "Rewrite core includes and Makevars paths",
+      "Derive both platform OBJECTS from staged translation units",
+      "Exclude tests and compiled artifacts",
+      "Include MIT notices"
+    ]
+  },
+  "build": {
+    "r_version": "4.3.0",
+    "platform": "x86_64-pc-linux-gnu",
+    "command": "R CMD build --no-build-vignettes --no-manual <staged apm>",
+    "built_at_utc": "2026-10-27T02:59:20Z"
+  },
+  "verification": {
+    "isolated_install": "passed: standalone asset installed through setup.R into project library",
+    "package_load": "passed under R 4.3.0; public outcome masking call verified",
+    "empirical_analysis": "two full frozen runs: exact scientific agreement under matching software, seed and thread settings",
+    "historical_numerical_equivalence": "not verified"
+  },
+  "source_url": "https://github.com/brad-ross/apm/releases/download/r-v0.1.0-replication/apm_0.1.0.tar.gz"
+}

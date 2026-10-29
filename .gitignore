@@ -4,9 +4,12 @@ data/**
 !data/**/README.md
 output/**
 **/*.pdf
-!README.pdf
 **/.DS_Store
 .replication/
 renv/library/
 renv/staging/
 dist/
+
+# Downloaded, checksum-verified APM release asset (included in journal archives).
+vendor/*.tar.gz
+vendor/apm-download-*
