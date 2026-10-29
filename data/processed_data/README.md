@@ -7,20 +7,22 @@
 - `firm_clusters_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}.parquet`
 - `panels_with_clustered_outcomes_start_year={FIRST_YEAR}_end_year={LAST_YEAR}_year_cluster_size={YEAR_CLUSTER_SIZE}_max_rank={MAX_RANK}.parquet`
 
-These VWH datasets feed panel reports, evaluation and decomposition. They remain
-restricted, are ignored by Git, and are excluded from the public archive.
+The panel reporting, estimator evaluation, and wage decomposition programs
+read these VWH datasets. The datasets remain restricted and are excluded from
+both Git and the public archive.
 
-**Only `driver_panel_grid.csv` is approved for distribution.** Its approval does
-not extend to any VWH dataset in this directory. The public archive includes
-this README and that exact CSV, never the rest of this folder.
+Only `driver_panel_grid.csv` is approved for distribution. This permission does
+not extend to the VWH datasets in this directory. The public archive therefore
+includes only this README and the specified CSV file from this directory.
 
 ## Public Figure 1a grid
 
-Public reproduction runs `code/reporting/driver_panel_results.R` from the repository root.
-The renderer reads this CSV under configured `PROCESSED_DATA_PATH` and writes
-`panel_plot_drivers_times.pdf` under configured `FIGURES_PATH`. Missing or invalid
-grids are package errors: restore the supplied file. Rendering never constructs
-the grid, reads driver records, or requires a private preparation success record.
+To reproduce Figure 1a from the supplied grid, run `code/reporting/driver_panel_results.R` from the repository root.
+The program reads this CSV from `PROCESSED_DATA_PATH` and writes
+`panel_plot_drivers_times.pdf` to `FIGURES_PATH`. If the grid is missing or
+invalid, restore the supplied file. Rendering requires neither the individual
+driver records nor a record of successful private preparation, and does not
+reconstruct the grid.
 
 ## Grid codebook
 
@@ -36,7 +38,7 @@ The CSV has exactly four numerical columns and one row per retained cohort:
 Each rectangle is the union of its historical driver/week tiles. Week centers
 are integer week IDs. Tile width follows historical `geom_tile()` defaults:
 the smallest spacing between retained week centers, or 1 for a single center.
-Any multiweek cohort makes this width 1. Thus `xmin = min(first_week, treatment_week) - width/2` and
+The width is 1 whenever a retained cohort spans multiple weeks. Thus `xmin = min(first_week, treatment_week) - width/2` and
 `xmax = max(first_week, treatment_week) + width/2`, including singleton-week cohorts. Driver row
 centers are the integers starting at 1; their tiles have height 1. Consequently
 `ymin = first_display_row - 0.5`, `ymax = last_display_row + 0.5`, and
@@ -51,26 +53,31 @@ on the occupied cells or the figure.
 
 ## Private preparation and provenance
 
-Authorized preparation runs `code/data/construct_driver_panel_grid.R` separately.
+The driver data are from Ater, Ross, Shany and Vasserman (2026), *Road Pricing
+Under Heterogeneity*, working paper. See that paper for details.
+
+Users with authorized access to the private records can run `code/data/construct_driver_panel_grid.R` separately.
 It reads private `RAW_DATA_PATH/riders.csv`, using only `rider_id`,
 `first_week_in_panel_dateweek_id`, and `began_active_week_id`. Records missing
-any of these fields are omitted. Identical driver/cohort records count once;
-conflicting cohorts for one driver and invalid week intervals fail explicitly.
+any of these fields are omitted. Duplicate driver/cohort records are counted once.
+The program stops if a driver is assigned to conflicting cohorts or a week
+interval is invalid.
 Cohorts are entry/treatment-week pairs with at least 100 distinct drivers.
-Preparation writes the geometry before a separate rendering process reads it.
+The preparation program saves the rectangle coordinates, which the separate
+plotting program then reads.
 
 The transformation and style come from
-`eed1a22:code_old/visualize_panels.R:279-320`. Recovery retains the inclusive
-`seq(first_week_id, treatment_week_id)` coverage that the historical code
-accidentally removed with `select()` before plotting `week_id`. Compact
-rectangles preserve that intended tile coverage without expanding or exporting
-individual driver/week records. The figure retains the historical colors,
+`eed1a22:code_old/visualize_panels.R:279-320`. The current implementation preserves the inclusive
+`seq(first_week_id, treatment_week_id)` coverage. The historical code removed
+this sequence with `select()` before plotting `week_id`. Representing the
+occupied cells as rectangles preserves the intended coverage without
+expanding or exporting individual driver/week records. The figure retains the historical colors,
 `theme_test()`, Week/Driver labels, zero axis expansion, and dimensions
 3.0625 by 3.25 inches.
 
-Public rendering verifies the figure from supplied plotting inputs. Verification
-of the upstream construction requires authorized access to private driver data;
-the public grid does not supply that access.
+The supplied plotting inputs permit verification of the rendered figure.
+Verifying the construction of those inputs requires authorized access to the
+private driver data, which are not distributed with the grid.
 
 Blank week fields are treated as missing, matching the historical CSV reader.
 Intervals include both endpoints even when the first week exceeds the treatment

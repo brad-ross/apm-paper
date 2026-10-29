@@ -32,7 +32,7 @@ code/jobs/evals.sh
 code/jobs/eval_reports.sh
 code/jobs/decomposition.sh
 code/jobs/decomp_reports.sh
-code/jobs/prepare_figure.sh
+code/jobs/figure_1a_data_prep.sh
 code/jobs/figure_1a.sh
 code/jobs/submit_pipeline.sh
 code/slurm/driver_panel_figure.slurm
@@ -43,7 +43,7 @@ code/slurm/evals.slurm
 code/slurm/eval_reports.slurm
 code/slurm/decomposition.slurm
 code/slurm/decomp_reports.slurm
-code/slurm/prepare_figure.slurm
+code/slurm/figure_1a_data_prep.slurm
 code/slurm/figure_1a.slurm
 data/README.md
 data/raw_data/README.md

@@ -202,6 +202,11 @@ comp_largest_super_cohort_sizes_across_clusterings <- function(panels_with_clust
 
         id_summary <- summarize_identification(ooi, cohort_sizes, rank, outcome_weights = outcomes_per_outcome_cluster)
 
+        if (curr_k == CHOSEN_K) {
+            write_result_snippet(id_summary$num_o3_iterations,
+                str_glue("num_o3_iterations_rank={rank}.txt"))
+        }
+
         largest_super_cohort_df <- NULL
         for (iter in 1:id_summary$num_o3_iterations) {
             iter_id_summary <- summarize_identification(ooi, cohort_sizes, rank, 
@@ -683,6 +688,17 @@ write_result_snippet(format_num(largest_super_cohort_stats$num_observations), "n
 
 # Number of workers for largest super cohort panel
 write_result_snippet(format_num(largest_super_cohort_stats$num_workers), "num_workers.txt")
+
+write_result_snippet(format_decimal(
+    largest_super_cohort_stats$num_observations / largest_super_cohort_stats$num_workers
+), "avg_observed_outcomes_per_worker.txt")
+
+write_result_snippet(format_pct(
+    max(clustered_panel_cohorts_for_plot$cohort_sizes) /
+        sum(clustered_panel_cohorts_for_plot$cohort_sizes)
+), "largest_cohort_worker_share.txt")
+write_result_snippet(format_num(sum(clustered_panel_cohorts_for_plot$cohort_sizes < 100)),
+    "num_cohorts_below_100_workers.txt")
 
 # Number of firms for largest super cohort panel
 write_result_snippet(format_num(largest_super_cohort_stats$num_firms), "num_firms.txt")

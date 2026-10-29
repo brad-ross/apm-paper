@@ -16,8 +16,8 @@ while (($#)); do
   esac
 done
 case "$target" in
-  vwh-all|conversion|panels|panel-reports|evals|eval-reports|decomposition|decomp-reports) ;;
-  private-figure|prepare-figure|figure-1a) ;;
+  vwh-all|conversion|panels|panel_reports|evals|eval_reports|decomposition|decomp_reports) ;;
+  private-figure|figure_1a_data_prep|figure_1a) ;;
   *) echo "Unknown target: $target" >&2; exit 1 ;;
 esac
 export DATA_PATH="${DATA_PATH:-$root/data}"
@@ -37,7 +37,7 @@ while read -r stage dependencies; do
   [[ -n "$stage" ]] || continue
   # Public rendering has no private dependency. A queued private preparation
   # supplies that dependency only in this explicit private submission.
-  if [[ "$stage" == figure-1a && -n "${ids[prepare-figure]:-}" ]]; then dependencies=prepare-figure; fi
+  if [[ "$stage" == figure_1a && -n "${ids[figure_1a_data_prep]:-}" ]]; then dependencies=figure_1a_data_prep; fi
   dep_ids=()
   for dep in $dependencies; do
     [[ -z "${ids[$dep]:-}" ]] || dep_ids+=("${ids[$dep]}")
@@ -49,7 +49,7 @@ while read -r stage dependencies; do
   fi
   mode=resume
   if [[ ",$force," == *,all,* || ",$force," == *,"$stage",* ]]; then mode=fresh; fi
-  reply=$(sbatch "${args[@]}" "code/slurm/${stage//-/_}.slurm" "$root" "$mode")
+  reply=$(sbatch "${args[@]}" "code/slurm/${stage}.slurm" "$root" "$mode")
   [[ "$reply" =~ ^[0-9]+(\;[^[:space:]]+)?$ ]] || { echo "Invalid sbatch response: $reply" >&2; exit 1; }
   ids[$stage]=${reply%%;*}
   printf '%s\t%s\n' "$stage" "${ids[$stage]}" | tee -a "$record"

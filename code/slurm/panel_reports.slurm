@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=apm-panel-reports
+#SBATCH --job-name=apm-panel_reports
 #SBATCH --cpus-per-task=16
 #SBATCH --mem=50G
 #SBATCH --time=12:00:00
