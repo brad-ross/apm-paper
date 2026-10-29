@@ -1,5 +1,4 @@
 # Private, explicitly requested preparation step; public rendering never sources it.
-# Recovered from eed1a22:code_old/visualize_panels.R:279-320.
 source("code/lib/get_io_paths.R")
 source("code/lib/driver_panel_helpers.R")
 
