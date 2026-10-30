@@ -1,14 +1,12 @@
 library(tidyverse)
 library(arrow)
 
-# Paths and constants
-source("code/get_io_paths.R")
+source("code/lib/get_io_paths.R")
 
 VENETO_PROVINCES <- c("BL", "PD", "RO", "TV", "VE", "VR", "VI")
 
 # Internal helper: coerce inputs to an Arrow Dataset for consistent lazy execution
 .to_arrow_dataset <- function(x) {
-  # Leave Arrow objects as-is
   if (inherits(x, c("Dataset", "ArrowDplyrQuery", "Table", "RecordBatchReader", "ArrowTabular"))) {
     return(x)
   }
@@ -129,7 +127,6 @@ filter_to_always_present_workers_and_firms <- function(df, collect = FALSE) {
       filter(firm_num_years == total_years) |>
       select(firm, province)
 
-    # Restrict to those firms
     df_new <- df |>
       inner_join(always_present_firms, by = c("firm", "province"))
 
@@ -140,7 +137,6 @@ filter_to_always_present_workers_and_firms <- function(df, collect = FALSE) {
       filter(worker_num_years == total_years) |>
       select(worker)
 
-    # Restrict to those workers as well
     df_new <- df_new |>
       inner_join(always_present_workers, by = "worker") |>
       collect()

@@ -1,7 +1,20 @@
+# Keep data-folder documentation, never data files (including the public grid).
 data/**
+!data/**/
+!data/**/README.md
 output/**
 **/*.pdf
 **/.DS_Store
+.replication/
+renv/library/
+renv/staging/
+dist/
 
-code/init_server.sh
-code/*.slurm
+vendor/*.tar.gz
+vendor/apm-download-*
+
+# Local replication planning and verification records.
+docs/replication/baseline.md
+docs/replication/data-sources.md
+docs/replication/exhibits.csv
+docs/replication/verification.md

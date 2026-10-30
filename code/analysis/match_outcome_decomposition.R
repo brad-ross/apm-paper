@@ -1,31 +1,26 @@
-devtools::load_all("../apm-package/r")
+library(apm)
 
-source("code/vwh_data_helpers.R")
-source("code/get_io_paths.R")
-source("code/env_config.R")
-source("code/estimation_helpers.R")
+source("code/lib/vwh_data_helpers.R")
+source("code/lib/get_io_paths.R")
+source("code/lib/env_config.R")
+source("code/lib/estimation_helpers.R")
 
 library(tidyverse)
 library(arrow)
 
 print(str_glue("Running match outcome decomposition for FIRST_YEAR={FIRST_YEAR}, LAST_YEAR={LAST_YEAR}, MAX_RANK={MAX_RANK}, YEAR_CLUSTER_SIZE={YEAR_CLUSTER_SIZE}, MIN_COHORT_SIZE={MIN_COHORT_SIZE}, CHOSEN_K={CHOSEN_K}"))
 
-# Load data using shared helpers
 clustered_panels <- load_clustered_panels()
 full_panel_df <- filter_panel_by_k(clustered_panels)
 panel <- create_estimation_panel(full_panel_df)
 
-# Load firm clusters and compute outcome weights
 firm_clusters <- load_firm_clusters()
 num_firms_by_outcome <- compute_num_firms_by_outcome(firm_clusters, full_panel_df, panel)
 
-# Get estimation specifications
 est_specs <- get_default_est_specs(include_extended = FALSE)
 
-# Get bootstrap draws
 wb <- get_default_bootstrap(panel)
 
-# Compute outcome indices by province for the target year
 outcome_indices_by_province <- {
     outcome_ids <- panel$get_outcome_ids()
     components <- strsplit(outcome_ids, ":", fixed = TRUE)
@@ -45,7 +40,7 @@ timing_target_param_components <- system.time({
             bootstrap = wb,
             num_threads = num_threads,
             est_outcome_means_via_imputation = TRUE,
-            imputation_options = list(solver = "lsmr", lsmr_atol = 1e-8, lsmr_btol = 1e-8, lsmr_max_iters = 1000, lsmr_conlim = Inf)
+            imputation_options = get_imputation_options()
         ),
         error = function(err) {
             warning(str_glue("est_target_param_components failed: {err$message}"))

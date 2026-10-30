@@ -6,11 +6,10 @@
 
 library(arrow)
 
-# Load clustered panels with log earnings transformation
 load_clustered_panels <- function(first_year = FIRST_YEAR, 
                                    last_year = LAST_YEAR,
                                    year_cluster_size = YEAR_CLUSTER_SIZE,
-                                   max_rank = 2L) {
+                                   max_rank = MAX_RANK) {
     read_parquet(file.path(PROCESSED_DATA_PATH, 
         str_glue("panels_with_clustered_outcomes_start_year={first_year}_end_year={last_year}_year_cluster_size={year_cluster_size}_max_rank={max_rank}.parquet"))) |>
         .to_arrow_dataset() |>
@@ -41,7 +40,6 @@ create_estimation_panel <- function(panel_df,
         subset_to_largest_super_cohort = subset_to_largest_super_cohort)
 }
 
-# Load firm clusters data
 load_firm_clusters <- function(first_year = FIRST_YEAR,
                                 last_year = LAST_YEAR,
                                 year_cluster_size = YEAR_CLUSTER_SIZE) {
@@ -144,4 +142,8 @@ compute_num_firms_by_outcome <- function(firm_clusters, panel_df, panel, chosen_
         select(outcome_idx, firms_for_outcome) |>
         arrange(outcome_idx) |>
         pull(firms_for_outcome)
+}
+
+get_imputation_options <- function() {
+    list(solver = "lsmr", lsmr_atol = 1e-8, lsmr_btol = 1e-8, lsmr_max_iters = 1000, lsmr_conlim = Inf)
 }

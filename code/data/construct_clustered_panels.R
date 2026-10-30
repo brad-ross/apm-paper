@@ -1,8 +1,8 @@
-devtools::load_all("../apm-package/r")
+library(apm)
 
-source("code/vwh_data_helpers.R")
-source("code/get_io_paths.R")
-source("code/env_config.R")
+source("code/lib/vwh_data_helpers.R")
+source("code/lib/get_io_paths.R")
+source("code/lib/env_config.R")
 
 library(tidyverse)
 
@@ -20,7 +20,10 @@ for (prov in unique(avg_weekly_earn_by_firm_year$province)) {
     data_construction_time <- system.time({
         avg_weekly_earn_by_firm_prov_first_year <- avg_weekly_earn_by_firm_year |>
             filter(province == prov, year == FIRST_YEAR)
-        prov_panel <- apm::UnbalancedPanel$new(avg_weekly_earn_by_firm_prov_first_year, "worker", "firm", "avg_weekly_earnings")
+        # Clustering uses earnings distributions, not factor identification.
+        prov_panel <- apm::UnbalancedPanel$new(avg_weekly_earn_by_firm_prov_first_year,
+            "worker", "firm", "avg_weekly_earnings",
+            subset_to_largest_super_cohort = FALSE)
     })
     print(paste("Panel creation time for", prov, ":", data_construction_time["elapsed"], "seconds, with", length(prov_panel$get_outcome_ids()), "workers and", length(prov_panel$get_unit_ids()), "firms"))
 

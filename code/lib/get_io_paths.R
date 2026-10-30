@@ -1,13 +1,10 @@
+source("config/paper.R")
+
 DATA_PATH <- Sys.getenv("DATA_PATH")
 
 RAW_DATA_PATH <- file.path(DATA_PATH, "raw_data")
 if (!dir.exists(RAW_DATA_PATH)) {
   dir.create(RAW_DATA_PATH, recursive = TRUE)
-}
-
-CLEAN_DATA_PATH <- file.path(DATA_PATH, "clean_data")
-if (!dir.exists(CLEAN_DATA_PATH)) {
-  dir.create(CLEAN_DATA_PATH, recursive = TRUE)
 }
 
 PROCESSED_DATA_PATH = file.path(DATA_PATH, "processed_data")

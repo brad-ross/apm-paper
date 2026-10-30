@@ -3,8 +3,8 @@
 # This script reads the parquet output from match_outcome_decomposition.R
 # and generates LaTeX tables for the paper.
 
-source("code/get_io_paths.R")
-source("code/text_formatting_helpers.R")
+source("code/lib/get_io_paths.R")
+source("code/lib/text_formatting_helpers.R")
 
 library(tidyverse)
 library(arrow)
