@@ -6,6 +6,8 @@ export OUTPUT_PATH ?= $(CURDIR)/output
 export REPLICATION_LIBRARY ?= $(CURDIR)/.replication/library
 export APM_MAX_THREADS ?= 1
 export APM_SEED ?= 9001
+# Make splits target and prerequisite paths on whitespace.
+$(foreach path_var,CURDIR DATA_PATH OUTPUT_PATH REPLICATION_LIBRARY,$(if $(filter 1,$(words $($(path_var)))),,$(error $(path_var) must be a nonempty path without whitespace)))
 STATE := $(OUTPUT_PATH)/.replication/stamps
 GRID := $(DATA_PATH)/processed_data/driver_panel_grid.csv
 STAGES := conversion panels panel_reports evals eval_reports decomposition decomp_reports figure_1a_data_prep figure_1a

@@ -1,12 +1,10 @@
-This repository contains the replication package for [“Estimating Counterfactual Matrix Means with Short Panel Data”](https://arxiv.org/abs/2312.07520) by Lihua Lei and Brad Ross.
-
 ## Overview
 
-This package reproduces the paper's empirical analysis using the Veneto Workers Histories (VWH) employment data and its illustration of driver observation patterns. The VWH analysis groups similar firms, evaluates predictions of wages withheld from estimation, and estimates how much of the average wage differences between provinces can be attributed to province effects. The programs produce the figures, tables, and numerical results used in Figure 1b, Section 5, and Appendix G.
+This package reproduces the empirical results from [“Estimating Counterfactual Matrix Means with Short Panel Data”](https://arxiv.org/abs/2312.07520) by Lihua Lei and Brad Ross using the Veneto Workers Histories (VWH) employment dataset and driver behavior data from *Road Pricing Under Heterogeneity* by Ater, Ross, Shany and Vasserman. The VWH analysis groups similar firms, evaluates predictions of wages withheld from estimation, and estimates how much of the average wage differences between provinces can be attributed to province effects. The programs produce the figures, tables, and numerical results used in Figure 1b, Section 5, and Appendix G.
 
 Replication has two parts. The VWH analysis requires data obtained separately from the provider and runs with `make vwh-all`. Figure 1a uses the supplied public plotting data and runs with `make figure_1a`; the underlying driver microdata are not needed. Both commands install the required R packages before computation. The sections below describe the data inputs, computing requirements, and execution steps. With the resource allocations reported below, the full analysis takes approximately 10 hours, excluding software installation and queue time.
 
-## Data availability and provenance
+## Data Availability and Provenance Statements
 
 ### Rights and availability
 
@@ -30,7 +28,7 @@ The driver data come from *Road Pricing Under Heterogeneity* by Ater, Ross, Shan
 
 The grid contains anonymous cohort rectangles with at least 100 drivers per cohort. Its columns and construction are documented in [data/processed_data/README.md](data/processed_data/README.md). The plotting program reads this grid directly. A separate preparation program constructs it from the private records.
 
-## Dataset list
+## Dataset List
 
 Paths below are relative to `DATA_PATH`, which defaults to `data/`.
 
@@ -44,41 +42,7 @@ Paths below are relative to `DATA_PATH`, which defaults to `data/`.
 
 The converted and derived VWH files must not be redistributed without permission. The driver-grid codebook is included. Request documentation for the original VWH files from the provider. See [data/raw_data/README.md](data/raw_data/README.md) for the conversion encoding and input-field notes.
 
-## Computational requirements
-
-### Software
-
-The analysis requires **R 4.3.0**, Bash, and GNU Make on a Unix-like system. All stages were run in a shared Ubuntu Linux environment on x86_64 servers. The recorded operating-system version was Ubuntu 22.04.5 LTS. Stata is not required because the R package Haven reads the original `.dta` files.
-
-Install the system tools needed to compile R packages if they are not already present before starting replication: R development headers, a C++17 compiler (we used GNU g++ 11.4.0), Fortran linking support, and BLAS/LAPACK (we used R's bundled BLAS and LAPACK 3.10.0). Arrow and other R packages may require additional system libraries.
-
-The replication commands then run `setup.R` to install the needed R package dependencies at the versions listed in `renv.lock` automatically. Setup also installs the [apm v0.1.0 release](https://github.com/brad-ross/apm/releases/tag/r-v0.1.0-replication), which implements the paper's Aggregated Projection Matrix (APM) estimator. Its source archive and checksum are specified in [vendor/apm_source.json](vendor/apm_source.json). The replication package already includes the APM source; setup downloads it from the [associated GitHub release](https://github.com/brad-ross/apm/releases/tag/r-v0.1.0-replication) if absent and checks its checksum before installation. As such, a separate copy of the APM repository is not required. `setup.R` installs packages into `.replication/library` by default and requires internet access for dependencies that are not already available. Instructions for changing the library location are given under “Paths, reruns and recovery.”
-
-Slurm is optional. It is used only for the cluster execution commands below; local execution requires no scheduler. Both execution modes use the same analysis programs and R packages.
-
-### Hardware, runtime and storage
-
-The complete pipeline ran on the same shared computing system, using the software environment described above. The table reports the CPU and memory allocations, time limits, and observed runtimes for each stage. These allocations describe the computing resources used for the run, rather than minimum hardware requirements. CPU counts refer to scheduler allocations and need not correspond to physical cores.
-
-Script names below are relative to `code/jobs/` for `.sh` files and `code/slurm/` for `.slurm` files.
-
-| Stage | Shell / Slurm scripts | Requested CPUs | Requested memory | Time limit | Observed elapsed time |
-|---|---|---:|---:|---:|---|
-| Conversion | `conversion.sh` / `conversion.slurm` | 4 | 16 GB | 4 hours | 18 min 40 sec |
-| Clustering/panels | `panels.sh` / `panels.slurm` | 40 | 50 GB | 24 hours | 4 min 32 sec |
-| Panel reports | `panel_reports.sh` / `panel_reports.slurm` | 16 | 50 GB | 12 hours | 4 min 38 sec |
-| Evaluations | `evals.sh` / `evals.slurm` | 250 | 50 GB | 2 days | 9 hr 10 min 26 sec |
-| Evaluation reports | `eval_reports.sh` / `eval_reports.slurm` | 4 | 16 GB | 2 hours | 27 sec |
-| Decomposition | `decomposition.sh` / `decomposition.slurm` | 250 | 50 GB | 2 days | 5 min 37 sec |
-| Decomposition reports | `decomp_reports.sh` / `decomp_reports.slurm` | 4 | 16 GB | 2 hours | 11 sec |
-| Figure 1a | `figure_1a.sh` / `figure_1a.slurm` | 1 | 4 GB | 30 min | Approximately 1–2 sec |
-| Private grid preparation | `figure_1a_data_prep.sh` / `figure_1a_data_prep.slurm` | 4 | 16 GB | 1 hour | Less than 1 sec in the measured R session |
-
-The resource requests specify the limits configured for these jobs; we have not measured minimum memory requirements. Local execution is sequential. Under Slurm, independent stages can run concurrently after clustering. Total elapsed time also depends on the job queue, software installation, and hardware.
-
-A working data directory with the raw and generated data occupied approximately 3.7 GB, and the installed R library approximately 535 MB. We recommend allowing at least 10 GB of working disk space, with additional space for package compilation, caches, and archived runs. This recommendation does not reflect a measurement of peak temporary storage.
-
-## Description of programs
+## Description of Code
 
 ### Stage dependencies
 
@@ -137,7 +101,43 @@ The reporting stages write figures, tables, and in-text snippets under `output/r
 
 Replication scripts are licensed under MIT; see [LICENSE](LICENSE). APM retains its own MIT notices. The code license does not grant rights to data, numerical plotting inputs, documentation or other third-party material.
 
-## Instructions to replicators
+## Computational Requirements
+
+### Software
+
+The analysis requires **R 4.3.0**, Bash, and GNU Make on a Unix-like system. All stages were run in a shared Ubuntu Linux environment on x86_64 servers. The recorded operating-system version was Ubuntu 22.04.5 LTS. Stata is not required because the R package Haven reads the original `.dta` files.
+
+Install the system tools needed to compile R packages if they are not already present before starting replication: R development headers, a C++17 compiler (we used GNU g++ 11.4.0), Fortran linking support, and BLAS/LAPACK (we used R's bundled BLAS and LAPACK 3.10.0). Arrow and other R packages may require additional system libraries.
+
+The replication commands then run `setup.R` to install the needed R package dependencies at the versions listed in `renv.lock` automatically. Setup also installs the [apm v0.1.0 release](https://github.com/brad-ross/apm/releases/tag/r-v0.1.0-replication), which implements the paper's Aggregated Projection Matrix (APM) estimator. Its source archive and checksum are specified in [vendor/apm_source.json](vendor/apm_source.json). The replication package already includes the APM source; setup downloads it from the [associated GitHub release](https://github.com/brad-ross/apm/releases/tag/r-v0.1.0-replication) if absent and checks its checksum before installation. As such, a separate copy of the APM repository is not required. `setup.R` installs packages into `.replication/library` by default and requires internet access for dependencies that are not already available. Instructions for changing the library location are given under “Paths, reruns and recovery.”
+
+The distributed README includes an [R package-version appendix](#appendix-r-package-versions) generated from `renv.lock` during archive assembly; the lockfile remains the authoritative dependency record.
+
+Slurm is optional. It is used only for the cluster execution commands below; local execution requires no scheduler. Both execution modes use the same analysis programs and R packages.
+
+### Hardware, runtime and storage
+
+The complete pipeline ran on the same shared computing system, using the software environment described above. The table reports the CPU and memory allocations, time limits, and observed runtimes for each stage. This is a known working configuration, not an established minimum hardware requirement. CPU counts refer to scheduler allocations and need not correspond to physical cores.
+
+Script names below are relative to `code/jobs/` for `.sh` files and `code/slurm/` for `.slurm` files.
+
+| Stage | Shell / Slurm scripts | Requested CPUs | Requested memory | Time limit | Observed elapsed time |
+|---|---|---:|---:|---:|---|
+| Conversion | `conversion{.sh/.slurm}` | 4 | 16 GB | 4 hours | 18 min 40 sec |
+| Clustering / panels | `panels{.sh/.slurm}` | 40 | 50 GB | 24 hours | 4 min 32 sec |
+| Panel reports | `panel_reports{.sh/.slurm}` | 16 | 50 GB | 12 hours | 4 min 38 sec |
+| Evaluations | `evals{.sh/.slurm}` | 250 | 50 GB | 2 days | 9 hr 10 min 26 sec |
+| Evaluation reports | `eval_reports{.sh/.slurm}` | 4 | 16 GB | 2 hours | 27 sec |
+| Decomposition | `decomposition{.sh/.slurm}` | 250 | 50 GB | 2 days | 5 min 37 sec |
+| Decomposition reports | `decomp_reports{.sh/.slurm}` | 4 | 16 GB | 2 hours | 11 sec |
+| Figure 1a | `figure_1a{.sh/.slurm}` | 1 | 4 GB | 30 min | Approximately 1–2 sec |
+| Private grid preparation | `figure_1a_data_prep{.sh/.slurm}` | 4 | 16 GB | 1 hour | Less than 1 sec in the measured R session |
+
+The resource requests specify the limits configured for these jobs; we have not measured minimum memory requirements. Local execution is sequential. Under Slurm, independent stages can run concurrently after clustering. Total elapsed time also depends on the job queue, software installation, and hardware.
+
+A working data directory with the raw and generated data occupied approximately 3.7 GB, and the installed R library approximately 535 MB. We recommend allowing at least 10 GB of working disk space, with additional space for package compilation, caches, and archived runs. This recommendation does not reflect a measurement of peak temporary storage.
+
+## Instructions to Replicators
 
 Run all commands from the package root, the directory containing `Makefile` and `setup.R`. Choose either local execution or Slurm execution. Both follow the same sequence: convert the raw VWH files, construct the panels, run the analyses, and generate the reports. Figure 1a is independent of these stages.
 
@@ -181,9 +181,11 @@ bash code/jobs/submit_pipeline.sh --target vwh-all --dry-run
 
 ### Paths, reruns and recovery
 
+The project directory and configured data, output, and library paths must not contain whitespace.
+
 To use different storage locations, set `DATA_PATH`, `OUTPUT_PATH`, or `REPLICATION_LIBRARY` to absolute paths before running Make. Do not install packages into a library that running jobs are using; wait for those jobs to finish or select a separate library. The analysis settings described below can also be changed through environment variables.
 
-Each successfully completed stage creates `OUTPUT_PATH/.replication/stamps/<stage>.done`. Make uses this record to omit completed stages unless a prerequisite has been rerun or a stage is explicitly requested again:
+Each successfully completed stage creates `OUTPUT_PATH/.replication/stamps/<stage>.done`. Make uses this record to omit completed stages unless a prerequisite has been rerun or a stage is explicitly forced using `FORCE`:
 
 ```sh
 make vwh-all FORCE=conversion
@@ -216,7 +218,7 @@ make submit-figure
 
 Preparation saves the grid before a separate rendering process reads it. Preparation is omitted when the grid already exists, unless `FORCE=figure_1a_data_prep` or `FORCE=all` is supplied to the private target. The public `figure_1a` target reads only the supplied grid.
 
-## List of outputs and programs
+## List of Outputs and Programs
 
 Only Figure 1a is reproducible from the public data supplied here; the VWH outputs require data access. This table lists only exhibits used in the manuscript. Figure 2 is a TikZ illustration maintained in the manuscript source and requires no replication-package output.
 

@@ -54,3 +54,4 @@ vendor/apm_source.json
 vendor/apm_0.1.0.tar.gz
 tools/build_replication_archive.R
 tools/public_files.txt
+tools/readme_pdf.lua

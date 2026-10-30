@@ -9,7 +9,7 @@ library(arrow)
 load_clustered_panels <- function(first_year = FIRST_YEAR, 
                                    last_year = LAST_YEAR,
                                    year_cluster_size = YEAR_CLUSTER_SIZE,
-                                   max_rank = 2L) {
+                                   max_rank = MAX_RANK) {
     read_parquet(file.path(PROCESSED_DATA_PATH, 
         str_glue("panels_with_clustered_outcomes_start_year={first_year}_end_year={last_year}_year_cluster_size={year_cluster_size}_max_rank={max_rank}.parquet"))) |>
         .to_arrow_dataset() |>
